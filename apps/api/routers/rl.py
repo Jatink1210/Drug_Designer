@@ -1,0 +1,40 @@
+"""Reinforcement Learning (RL) API Routes."""
+from typing import Dict, Any
+from fastapi import APIRouter
+
+from services.rl_optimizer import RLService, RLStatusResult, OptimizationConstraints
+
+router = APIRouter(prefix="/api/rl", tags=["Reinforcement Learning"])
+
+@router.get("/status", response_model=RLStatusResult)
+async def rl_infrastructure_status() -> RLStatusResult:
+    """Returns readiness status of RL subsystems (molecule optimization, retrosynthesis, ontology design)."""
+    return RLService.get_status()
+
+class GenerationRequest(OptimizationConstraints):
+    base_smiles: str
+
+@router.post("/generate_molecules")
+async def generate_optimized_molecules(req: GenerationRequest) -> Dict[str, Any]:
+    """
+    Generates optimized molecule candidates via bioisosteric replacement,
+    substituent addition, and tautomer enumeration with ADMET scoring.
+    """
+    return RLService.generate_molecules(
+        base_smiles=req.base_smiles,
+        constraints=OptimizationConstraints(
+            max_steps=req.max_steps,
+            enforce_drug_likeness=req.enforce_drug_likeness,
+            forbid_illicit_targets=req.forbid_illicit_targets
+        )
+    )
+
+@router.post("/retrosynthesis")
+async def formulate_retrosynthetic_routes(target_smiles: str) -> Dict[str, Any]:
+    """Analyzes retrosynthetic routes via reaction template disconnection."""
+    return RLService.analyze_retrosynthesis(target_smiles)
+
+@router.post("/ontology_design")
+async def design_taxonomy_branches(phenotype: str) -> Dict[str, Any]:
+    """Designs ontology branches using graph centrality analysis on the knowledge graph."""
+    return RLService.design_ontology({"phenotype_seed": phenotype})

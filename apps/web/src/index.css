@@ -1,0 +1,393 @@
+@import "tailwindcss";
+
+@theme {
+  --color-app: var(--bg-app);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-muted: var(--text-muted);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-subtle: var(--accent-subtle);
+
+  --color-border: var(--border);
+  --color-border-light: var(--border-light);
+
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius-lg);
+  --radius-lg: var(--radius-xl);
+}
+
+/* ─── Design System: Impeccable Minimalist Light ─── */
+
+:root {
+  /* Surfaces - Warm tinted off-white */
+  --bg-app: #F9F9F7;        
+  --bg-surface: #F2F2EF;    
+  --bg-elevated: #FFFFFF;   
+  --bg-mesh: none; /* No messy gradient noise */
+
+  /* Typography - Crisp tinted black */
+  --text-primary: #1C1B19;  
+  --text-secondary: #57554F; 
+  --text-muted: #8B8982;    
+
+  /* Accent - Editorial deep pine */
+  --accent: #005B4B;
+  --accent-hover: #004539;
+  --accent-subtle: #E6EFED;
+
+  /* Borders - Sharp, thin wireframes */
+  --border: #E8E7E2;
+  --border-light: #F0EFEA;
+
+  /* AI-generated block styling - minimal, structural */
+  --ai-bg: #F4F3EF;
+  --ai-border: #D6D5CE;
+  --ai-text: #3D3C38;
+
+  /* Shadows - Barely there, strictly for stacking context */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  /* Radii - Sharp and structural */
+  --radius: 0px;
+  --radius-lg: 2px;
+  --radius-xl: 4px;
+
+  /* Typography Scales (Fluid) */
+  --font-sans: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Syne", "DM Sans", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* ─── Global Reset ──────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: clamp(0.9rem, 0.8vw + 0.5rem, 1rem); /* Fluid body text */
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 0;
+}
+
+/* ─── Scrollbars ────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ─── Focus ring ────────────────────────────────────────── */
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ─── AI-generated blocks ───────────────────────────────── */
+
+.ai-block {
+  background: var(--ai-bg);
+  border: 1px solid var(--ai-border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  color: var(--ai-text);
+  position: relative;
+}
+
+.ai-block::before {
+  content: "AI Generated";
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--ai-bg);
+  padding: 0 6px;
+  color: var(--ai-text);
+  opacity: 0.7;
+}
+
+.ai-block .citation {
+  font-size: 10px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.ai-block .citation:hover {
+  text-decoration: underline;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+/* ─── Selection ─────────────────────────────────────────── */
+
+::selection {
+  background: var(--accent-subtle);
+  color: var(--text-primary);
+}
+
+/* ─── Structural Containers (Replacing Glass) ───────────── */
+
+.glass-panel, .glass-sidebar, .glass-card, .glass-elevated {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: none; /* Flat, structural */
+  border-radius: var(--radius);
+}
+
+.glass-card {
+  transition: border-color 200ms ease;
+}
+
+.glass-card:hover {
+  border-color: var(--text-muted);
+}
+
+/* ─── Premium input styling ───────────────────────────── */
+
+input[type="text"],
+input[type="number"],
+input[type="search"],
+input[type="email"],
+input[type="url"],
+select,
+textarea {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+  background: var(--bg-elevated);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* ─── Premium button styling ──────────────────────────── */
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  font-weight: 500;
+  border-radius: var(--radius);
+  transition: background 150ms ease, transform 100ms ease, box-shadow 150ms ease;
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 2px 8px rgba(194, 97, 75, 0.25);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* ─── Table styling ───────────────────────────────────── */
+
+table {
+  border-collapse: collapse;
+}
+
+thead tr {
+  border-bottom: 2px solid var(--border);
+}
+
+thead th {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+tbody tr {
+  transition: background 100ms ease;
+}
+
+tbody tr:hover {
+  background: var(--accent-subtle);
+}
+
+/* ─── Confidence / status pills ───────────────────────── */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-pill.success { background: #ecfdf5; color: #047857; }
+.status-pill.warning { background: #fffbeb; color: #b45309; }
+.status-pill.error   { background: #fef2f2; color: #b91c1c; }
+.status-pill.info    { background: #eff6ff; color: #1d4ed8; }
+.status-pill.neutral { background: var(--bg-surface); color: var(--text-muted); }
+
+/* ─── Section headers ─────────────────────────────────── */
+
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+/* ─── Metric cards ────────────────────────────────────── */
+
+.metric-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  background: var(--bg-surface);
+}
+
+.metric-card .metric-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.metric-card .metric-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 2px;
+}
+
+.metric-card .metric-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+/* ─── Provenance badge ────────────────────────────────── */
+
+.provenance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+}
+
+/* ─── Tooltips ────────────────────────────────────────── */
+
+[title] {
+  position: relative;
+}
+
+/* ─── Disabled controls: clear visual state ───────────── */
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: saturate(0.5);
+}
+
+/* ─── Empty states ────────────────────────────────────── */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-state svg {
+  color: var(--border);
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  color: var(--text-muted);
+  font-size: 13px;
+  max-width: 280px;
+}
+
+/* ─── Animations ───────────────────────────────────────── */
+
+@keyframes indeterminate {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(150%); }
+  100% { transform: translateX(-100%); }
+}

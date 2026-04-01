@@ -1,0 +1,233 @@
+name: Release
+# SECONDARY: Canonical CI/CD is Jenkins (ops/ci/Jenkinsfile).
+# This GitHub Actions workflow is manual-only, kept as a fallback for
+# environments where Jenkins is not available.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
+
+jobs:
+  # ── Run tests before building release artifacts ──
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install backend deps
+        run: pip install -r apps/api/requirements.txt
+
+      - name: Install frontend deps
+        run: cd apps/web && npm ci
+
+      - name: Backend lint + test
+        run: |
+          cd apps/api
+          python -m ruff check .
+          python -m pytest tests/ -v -m "not integration" --ignore=tests/test_qdrant_db.py --ignore=tests/test_smoke_endpoints.py
+
+      - name: Frontend lint + build + test
+        run: |
+          cd apps/web
+          npm run lint
+          npm run build
+          npm run test -- --run
+
+  # ── Create GitHub Release (once, before builds) ──
+  create-release:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create.outputs.id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create draft release
+        id: create
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_ID=$(gh release create "${{ github.ref_name }}" \
+            --draft \
+            --title "DrugSynth Workbench ${{ github.ref_name }}" \
+            --notes "## DrugSynth Workbench ${{ github.ref_name }}
+
+          Desktop release — local-first biomedical discovery workbench.
+
+          ### Installation
+          - **Linux**: Download \`.AppImage\` (portable) or \`.deb\` (Debian/Ubuntu)
+          - **macOS**: Download \`.dmg\` or \`.pkg\` (macOS Installer)
+          - **Windows**: Download \`.msi\` (standard) or \`.exe\` (NSIS installer)
+
+          ### What's included
+          - Bundled Python backend (no separate Python install required)
+          - Local LLM support via Ollama
+          - 16 biomedical data connectors
+          - Evidence-based search with citations and contradictions
+          - Mol* 3D protein structure viewer
+          - Real molecule optimization (RDKit bioisosteric replacements)" \
+            2>&1 | grep -oP '(?<=releases/tag/)\S+' || true)
+          echo "id=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+
+  # ── Build desktop installers per platform ──
+  build-tauri:
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            target: linux
+          - platform: macos-latest
+            target: macos
+          - platform: windows-latest
+            target: windows
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+          shared-key: "release-v2-${{ matrix.target }}"
+
+      # Linux-specific system dependencies (Tauri v2 needs webkit2gtk-4.1)
+      - name: Install Linux deps
+        if: matrix.target == 'linux'
+        run: |
+          # Free disk space for the large build
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libxdo-dev \
+            libssl-dev \
+            patchelf
+
+      # Bundle Python backend into a portable directory
+      - name: Bundle Python backend (Linux/macOS)
+        if: matrix.target != 'windows'
+        shell: bash
+        run: |
+          chmod +x scripts/bundle-python.sh
+          scripts/bundle-python.sh
+
+      - name: Bundle Python backend (Windows)
+        if: matrix.target == 'windows'
+        shell: pwsh
+        run: scripts/bundle-python.ps1
+
+      # Install frontend dependencies and build
+      - name: Install frontend deps
+        run: cd apps/web && npm ci
+
+      - name: Install desktop deps
+        run: cd apps/desktop && npm install
+
+      # Build Tauri app (no release upload — we handle that separately)
+      - name: Build Tauri
+        shell: bash
+        run: |
+          if [ "${{ matrix.target }}" = "linux" ]; then
+            export CARGO_BUILD_JOBS=2
+          fi
+          cd apps/desktop && npx tauri build
+
+      # Upload artifacts to the draft release
+      - name: Upload artifacts to release
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          BUNDLE_DIR="apps/desktop/src-tauri/target/release/bundle"
+
+          echo "=== Uploading artifacts for ${{ matrix.target }} ==="
+
+          if [ "${{ matrix.target }}" = "linux" ]; then
+            for f in "$BUNDLE_DIR"/deb/*.deb "$BUNDLE_DIR"/appimage/*.AppImage; do
+              [ -f "$f" ] && echo "Uploading: $(basename "$f")" && gh release upload "$TAG" "$f" --clobber
+            done
+          fi
+
+          if [ "${{ matrix.target }}" = "macos" ]; then
+            for f in "$BUNDLE_DIR"/dmg/*.dmg; do
+              [ -f "$f" ] && echo "Uploading: $(basename "$f")" && gh release upload "$TAG" "$f" --clobber
+            done
+          fi
+
+          if [ "${{ matrix.target }}" = "windows" ]; then
+            for f in "$BUNDLE_DIR"/msi/*.msi "$BUNDLE_DIR"/nsis/*.exe; do
+              [ -f "$f" ] && echo "Uploading: $(basename "$f")" && gh release upload "$TAG" "$f" --clobber
+            done
+          fi
+
+      # ── macOS: Build .pkg from .app using pkgbuild ──
+      - name: Build macOS .pkg installer
+        if: matrix.target == 'macos'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APP_PATH=$(find apps/desktop/src-tauri/target/release/bundle/macos -name "*.app" -maxdepth 1 | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: No .app found in bundle/macos/"
+            exit 1
+          fi
+
+          APP_NAME=$(basename "$APP_PATH")
+          echo "Found .app: $APP_PATH"
+
+          ARCH=$(uname -m)
+          PKG_NAME="DrugSynth-Workbench_1.0.0_${ARCH}.pkg"
+          PKG_PATH="apps/desktop/src-tauri/target/release/bundle/macos/${PKG_NAME}"
+
+          pkgbuild \
+            --root "$APP_PATH" \
+            --identifier "com.drugsynth.workbench" \
+            --version "1.0.0" \
+            --install-location "/Applications/${APP_NAME}" \
+            "$PKG_PATH"
+
+          echo "Built .pkg: $PKG_PATH ($(du -h "$PKG_PATH" | cut -f1))"
+
+          echo "PKG_PATH=$PKG_PATH" >> "$GITHUB_ENV"
+          echo "PKG_NAME=$PKG_NAME" >> "$GITHUB_ENV"
+
+      - name: Upload .pkg to release
+        if: matrix.target == 'macos'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" "$PKG_PATH" --clobber

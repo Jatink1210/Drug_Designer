@@ -1,0 +1,10 @@
+line-length = 120
+target-version = "py310"
+
+[lint]
+# Critical checks only — syntax errors, undefined names, shadowed builtins.
+# Expand coverage incrementally as existing code is cleaned up.
+select = ["E9", "F63", "F7", "F82"]
+
+[lint.per-file-ignores]
+"tests/*" = ["F811"]
