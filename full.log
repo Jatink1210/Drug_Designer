@@ -1,0 +1,570 @@
+backend-tests	Set up job	﻿2026-04-01T09:11:11.0070523Z Current runner version: '2.333.1'
+backend-tests	Set up job	2026-04-01T09:11:11.0092215Z ##[group]Runner Image Provisioner
+backend-tests	Set up job	2026-04-01T09:11:11.0092978Z Hosted Compute Agent
+backend-tests	Set up job	2026-04-01T09:11:11.0093468Z Version: 20260213.493
+backend-tests	Set up job	2026-04-01T09:11:11.0093965Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+backend-tests	Set up job	2026-04-01T09:11:11.0094637Z Build Date: 2026-02-13T00:28:41Z
+backend-tests	Set up job	2026-04-01T09:11:11.0095230Z Worker ID: {b9409809-c869-4db2-ae89-3d8be6ccf837}
+backend-tests	Set up job	2026-04-01T09:11:11.0095834Z Azure Region: westus3
+backend-tests	Set up job	2026-04-01T09:11:11.0096353Z ##[endgroup]
+backend-tests	Set up job	2026-04-01T09:11:11.0097742Z ##[group]Operating System
+backend-tests	Set up job	2026-04-01T09:11:11.0098274Z Ubuntu
+backend-tests	Set up job	2026-04-01T09:11:11.0098730Z 24.04.4
+backend-tests	Set up job	2026-04-01T09:11:11.0099169Z LTS
+backend-tests	Set up job	2026-04-01T09:11:11.0099550Z ##[endgroup]
+backend-tests	Set up job	2026-04-01T09:11:11.0100014Z ##[group]Runner Image
+backend-tests	Set up job	2026-04-01T09:11:11.0100464Z Image: ubuntu-24.04
+backend-tests	Set up job	2026-04-01T09:11:11.0100930Z Version: 20260323.65.1
+backend-tests	Set up job	2026-04-01T09:11:11.0101833Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260323.65/images/ubuntu/Ubuntu2404-Readme.md
+backend-tests	Set up job	2026-04-01T09:11:11.0103222Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260323.65
+backend-tests	Set up job	2026-04-01T09:11:11.0104017Z ##[endgroup]
+backend-tests	Set up job	2026-04-01T09:11:11.0104969Z ##[group]GITHUB_TOKEN Permissions
+backend-tests	Set up job	2026-04-01T09:11:11.0107220Z Contents: read
+backend-tests	Set up job	2026-04-01T09:11:11.0107813Z Metadata: read
+backend-tests	Set up job	2026-04-01T09:11:11.0108243Z Packages: read
+backend-tests	Set up job	2026-04-01T09:11:11.0108708Z ##[endgroup]
+backend-tests	Set up job	2026-04-01T09:11:11.0110679Z Secret source: Actions
+backend-tests	Set up job	2026-04-01T09:11:11.0111321Z Prepare workflow directory
+backend-tests	Set up job	2026-04-01T09:11:11.0766252Z Prepare all required actions
+backend-tests	Set up job	2026-04-01T09:11:11.0822944Z Getting action download info
+backend-tests	Set up job	2026-04-01T09:11:11.5689720Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+backend-tests	Set up job	2026-04-01T09:11:11.6767306Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+backend-tests	Set up job	2026-04-01T09:11:11.8258469Z Complete job name: backend-tests
+backend-tests	Run actions/checkout@v4	﻿2026-04-01T09:11:11.8835534Z ##[group]Run actions/checkout@v4
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8836397Z with:
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8836995Z   repository: Jatink1210/Workbench
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8837750Z   token: ***
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8838165Z   ssh-strict: true
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8838631Z   ssh-user: git
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8839100Z   persist-credentials: true
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8839541Z   clean: true
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8839974Z   sparse-checkout-cone-mode: true
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8840453Z   fetch-depth: 1
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8840880Z   fetch-tags: false
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8841312Z   show-progress: true
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8841761Z   lfs: false
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8842153Z   submodules: false
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8842594Z   set-safe-directory: true
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:11.8843371Z ##[endgroup]
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0052324Z Syncing repository: Jatink1210/Workbench
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0055031Z ##[group]Getting Git version info
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0056233Z Working directory is '/home/runner/work/Workbench/Workbench'
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0058992Z [command]/usr/bin/git version
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0060072Z git version 2.53.0
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0062801Z ##[endgroup]
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0069221Z Temporarily overriding HOME='/home/runner/work/_temp/cdb96c86-09a7-40f2-a550-91a42d40b5e3' before making global git config changes
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0071426Z Adding repository directory to the temporary git global config as a safe directory
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0073339Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Workbench/Workbench
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0077154Z Deleting the contents of '/home/runner/work/Workbench/Workbench'
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0081042Z ##[group]Initializing the repository
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0086039Z [command]/usr/bin/git init /home/runner/work/Workbench/Workbench
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0155744Z hint: Using 'master' as the name for the initial branch. This default branch name
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0158647Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0160244Z hint: to use in all of your new repositories, which will suppress this warning,
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0161856Z hint: call:
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0162472Z hint:
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0163403Z hint: 	git config --global init.defaultBranch <name>
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0164377Z hint:
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0165341Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0167164Z hint: 'development'. The just-created branch can be renamed via this command:
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0168348Z hint:
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0169053Z hint: 	git branch -m <name>
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0169741Z hint:
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0170936Z hint: Disable this message with "git config set advice.defaultBranchName false"
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0173428Z Initialized empty Git repository in /home/runner/work/Workbench/Workbench/.git/
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0176385Z [command]/usr/bin/git remote add origin https://github.com/Jatink1210/Workbench
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0200181Z ##[endgroup]
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0202183Z ##[group]Disabling automatic garbage collection
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0204024Z [command]/usr/bin/git config --local gc.auto 0
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0229554Z ##[endgroup]
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0230817Z ##[group]Setting up auth
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0236699Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0264621Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0490088Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.0516346Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.1391320Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.1393383Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.1395196Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.1396756Z ##[endgroup]
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.1397664Z ##[group]Fetching the repository
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:12.1398851Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +694d3a74a0f16ec3b16f98722f88a728990c348c:refs/remotes/origin/main
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.1666207Z From https://github.com/Jatink1210/Workbench
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.1687924Z  * [new ref]         694d3a74a0f16ec3b16f98722f88a728990c348c -> origin/main
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.1690717Z ##[endgroup]
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.1691672Z ##[group]Determining the checkout info
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.1692714Z ##[endgroup]
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.1700378Z [command]/usr/bin/git sparse-checkout disable
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.1760856Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.1796279Z ##[group]Checking out the ref
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.1808406Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.2054610Z Switched to a new branch 'main'
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.2058351Z branch 'main' set up to track 'origin/main'.
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.2201834Z ##[endgroup]
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.2242031Z [command]/usr/bin/git log -1 --format=%H
+backend-tests	Run actions/checkout@v4	2026-04-01T09:11:13.2244749Z 694d3a74a0f16ec3b16f98722f88a728990c348c
+backend-tests	Run actions/setup-python@v5	﻿2026-04-01T09:11:13.2480098Z ##[group]Run actions/setup-python@v5
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.2481108Z with:
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.2481782Z   python-version: 3.11
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.2482575Z   check-latest: false
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.2483634Z   token: ***
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.2484353Z   update-environment: true
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.2485205Z   allow-prereleases: false
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.2486040Z   freethreaded: false
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.2486773Z ##[endgroup]
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.4075487Z ##[group]Installed versions
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.4159738Z Successfully set up CPython (3.11.15)
+backend-tests	Run actions/setup-python@v5	2026-04-01T09:11:13.4162317Z ##[endgroup]
+backend-tests	Install dependencies	﻿2026-04-01T09:11:13.4310087Z ##[group]Run pip install -r requirements.txt
+backend-tests	Install dependencies	2026-04-01T09:11:13.4311359Z [36;1mpip install -r requirements.txt[0m
+backend-tests	Install dependencies	2026-04-01T09:11:13.4312460Z [36;1mpip install pytest pytest-asyncio httpx[0m
+backend-tests	Install dependencies	2026-04-01T09:11:13.4343760Z shell: /usr/bin/bash -e {0}
+backend-tests	Install dependencies	2026-04-01T09:11:13.4344635Z env:
+backend-tests	Install dependencies	2026-04-01T09:11:13.4345444Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+backend-tests	Install dependencies	2026-04-01T09:11:13.4347231Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+backend-tests	Install dependencies	2026-04-01T09:11:13.4348740Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+backend-tests	Install dependencies	2026-04-01T09:11:13.4350100Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+backend-tests	Install dependencies	2026-04-01T09:11:13.4351458Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+backend-tests	Install dependencies	2026-04-01T09:11:13.4352834Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+backend-tests	Install dependencies	2026-04-01T09:11:13.4353963Z ##[endgroup]
+backend-tests	Install dependencies	2026-04-01T09:11:14.5188495Z Collecting fastapi>=0.135.2 (from -r requirements.txt (line 1))
+backend-tests	Install dependencies	2026-04-01T09:11:14.6064016Z   Downloading fastapi-0.135.2-py3-none-any.whl.metadata (28 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.6638173Z Collecting uvicorn>=0.42.0 (from uvicorn[standard]>=0.42.0->-r requirements.txt (line 2))
+backend-tests	Install dependencies	2026-04-01T09:11:14.6743058Z   Downloading uvicorn-0.42.0-py3-none-any.whl.metadata (6.7 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.7943092Z Collecting pydantic>=2.12.5 (from -r requirements.txt (line 3))
+backend-tests	Install dependencies	2026-04-01T09:11:14.8053399Z   Downloading pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.8438094Z Collecting pydantic-settings>=2.13.1 (from -r requirements.txt (line 4))
+backend-tests	Install dependencies	2026-04-01T09:11:14.8544013Z   Downloading pydantic_settings-2.13.1-py3-none-any.whl.metadata (3.4 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.8769547Z Collecting platformdirs>=4.9.4 (from -r requirements.txt (line 5))
+backend-tests	Install dependencies	2026-04-01T09:11:14.8881922Z   Downloading platformdirs-4.9.4-py3-none-any.whl.metadata (4.7 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.9088797Z Collecting httpx>=0.28.1 (from -r requirements.txt (line 6))
+backend-tests	Install dependencies	2026-04-01T09:11:14.9192671Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.9391582Z Collecting aiosqlite>=0.22.1 (from -r requirements.txt (line 7))
+backend-tests	Install dependencies	2026-04-01T09:11:14.9504879Z   Downloading aiosqlite-0.22.1-py3-none-any.whl.metadata (4.3 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.9848419Z Collecting qdrant-client>=1.17.1 (from -r requirements.txt (line 8))
+backend-tests	Install dependencies	2026-04-01T09:11:14.9954283Z   Downloading qdrant_client-1.17.1-py3-none-any.whl.metadata (11 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:15.0184445Z Collecting llama-cpp-python>=0.3.18 (from -r requirements.txt (line 9))
+backend-tests	Install dependencies	2026-04-01T09:11:15.0314999Z   Downloading llama_cpp_python-0.3.19.tar.gz (59.0 MB)
+backend-tests	Install dependencies	2026-04-01T09:11:16.2903884Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 59.0/59.0 MB 48.0 MB/s  0:00:01
+backend-tests	Install dependencies	2026-04-01T09:11:17.6458674Z   Installing build dependencies: started
+backend-tests	Install dependencies	2026-04-01T09:11:18.5088960Z   Installing build dependencies: finished with status 'done'
+backend-tests	Install dependencies	2026-04-01T09:11:18.5098108Z   Getting requirements to build wheel: started
+backend-tests	Install dependencies	2026-04-01T09:11:19.0688172Z   Getting requirements to build wheel: finished with status 'done'
+backend-tests	Install dependencies	2026-04-01T09:11:19.0690640Z   Preparing metadata (pyproject.toml): started
+backend-tests	Install dependencies	2026-04-01T09:11:19.3299083Z   Preparing metadata (pyproject.toml): finished with status 'done'
+backend-tests	Install dependencies	2026-04-01T09:11:19.4735533Z Collecting PyMuPDF>=1.27.2.2 (from -r requirements.txt (line 12))
+backend-tests	Install dependencies	2026-04-01T09:11:19.4846512Z   Downloading pymupdf-1.27.2.2-cp310-abi3-manylinux_2_28_x86_64.whl.metadata (3.4 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.5014046Z Collecting python-multipart>=0.0.22 (from -r requirements.txt (line 13))
+backend-tests	Install dependencies	2026-04-01T09:11:19.5115031Z   Downloading python_multipart-0.0.22-py3-none-any.whl.metadata (1.8 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.5405370Z Collecting redis>=7.4.0 (from -r requirements.txt (line 14))
+backend-tests	Install dependencies	2026-04-01T09:11:19.5508959Z   Downloading redis-7.4.0-py3-none-any.whl.metadata (12 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.5753400Z Collecting structlog>=25.5.0 (from -r requirements.txt (line 15))
+backend-tests	Install dependencies	2026-04-01T09:11:19.5860468Z   Downloading structlog-25.5.0-py3-none-any.whl.metadata (9.5 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.6053270Z Collecting tenacity>=9.1.4 (from -r requirements.txt (line 16))
+backend-tests	Install dependencies	2026-04-01T09:11:19.6168960Z   Downloading tenacity-9.1.4-py3-none-any.whl.metadata (1.2 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.6380006Z Collecting arq>=0.27.0 (from -r requirements.txt (line 17))
+backend-tests	Install dependencies	2026-04-01T09:11:19.6491235Z   Downloading arq-0.27.0-py3-none-any.whl.metadata (2.8 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.6680153Z Collecting neo4j>=6.1.0 (from -r requirements.txt (line 18))
+backend-tests	Install dependencies	2026-04-01T09:11:19.6788132Z   Downloading neo4j-6.1.0-py3-none-any.whl.metadata (5.3 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.7104654Z Collecting pytest>=9.0.2 (from -r requirements.txt (line 19))
+backend-tests	Install dependencies	2026-04-01T09:11:19.7210507Z   Downloading pytest-9.0.2-py3-none-any.whl.metadata (7.6 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.7428286Z Collecting pytest-asyncio>=1.3.0 (from -r requirements.txt (line 20))
+backend-tests	Install dependencies	2026-04-01T09:11:19.7532201Z   Downloading pytest_asyncio-1.3.0-py3-none-any.whl.metadata (4.1 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.7731321Z Collecting pytest-cov>=7.1.0 (from -r requirements.txt (line 21))
+backend-tests	Install dependencies	2026-04-01T09:11:19.7841512Z   Downloading pytest_cov-7.1.0-py3-none-any.whl.metadata (32 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.1108342Z Collecting ruff>=0.15.7 (from -r requirements.txt (line 22))
+backend-tests	Install dependencies	2026-04-01T09:11:20.1218916Z   Downloading ruff-0.15.8-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (26 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.1727229Z Collecting black>=26.3.1 (from -r requirements.txt (line 23))
+backend-tests	Install dependencies	2026-04-01T09:11:20.1832218Z   Downloading black-26.3.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.2389440Z Collecting torch>=2.11.0 (from -r requirements.txt (line 24))
+backend-tests	Install dependencies	2026-04-01T09:11:20.2507999Z   Downloading torch-2.11.0-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (29 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.3103142Z Collecting transformers>=5.3.0 (from -r requirements.txt (line 25))
+backend-tests	Install dependencies	2026-04-01T09:11:20.3205776Z   Downloading transformers-5.4.0-py3-none-any.whl.metadata (32 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.3798391Z Collecting accelerate>=1.13.0 (from -r requirements.txt (line 26))
+backend-tests	Install dependencies	2026-04-01T09:11:20.3904365Z   Downloading accelerate-1.13.0-py3-none-any.whl.metadata (19 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.4503369Z Collecting rdkit>=2025.9.6 (from -r requirements.txt (line 27))
+backend-tests	Install dependencies	2026-04-01T09:11:20.4612699Z   Downloading rdkit-2025.9.6-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.5770438Z Collecting matplotlib>=3.10.8 (from -r requirements.txt (line 30))
+backend-tests	Install dependencies	2026-04-01T09:11:20.5884971Z   Downloading matplotlib-3.10.8-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (52 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.6265547Z Collecting plotly>=6.6.0 (from -r requirements.txt (line 31))
+backend-tests	Install dependencies	2026-04-01T09:11:20.6372854Z   Downloading plotly-6.6.0-py3-none-any.whl.metadata (8.5 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.6629974Z Collecting networkx>=3.6.1 (from -r requirements.txt (line 32))
+backend-tests	Install dependencies	2026-04-01T09:11:20.6735557Z   Downloading networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.7786227Z Collecting pandas>=3.0.1 (from -r requirements.txt (line 33))
+backend-tests	Install dependencies	2026-04-01T09:11:20.7891541Z   Downloading pandas-3.0.2-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (79 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.8339641Z ERROR: Ignored the following yanked versions: 3.2.0b1
+backend-tests	Install dependencies	2026-04-01T09:11:20.8347076Z ERROR: Ignored the following versions that require a different python version: 0.11.10 Requires-Python >=3.7,<=3.11; 1.0.0 Requires-Python >=3.7,<=3.11; 1.0.1 Requires-Python >=3.7,<=3.11; 1.0.2 Requires-Python >=3.7,<=3.11
+backend-tests	Install dependencies	2026-04-01T09:11:20.8351680Z ERROR: Could not find a version that satisfies the requirement openpyxl>=3.2.0 (from versions: 1.1.0, 1.1.4, 1.1.5, 1.1.6, 1.1.7, 1.2.3, 1.5.0, 1.5.1, 1.5.2, 1.5.3, 1.5.4, 1.5.5, 1.5.6, 1.5.7, 1.5.8, 1.6.1, 1.6.2, 1.7.0, 1.8.0, 1.8.1, 1.8.2, 1.8.3, 1.8.4, 1.8.5, 1.8.6, 2.0.2, 2.0.3, 2.0.4, 2.0.5, 2.1.0, 2.1.1, 2.1.2, 2.1.3, 2.1.4, 2.1.5, 2.2.0, 2.2.1, 2.2.2, 2.2.3, 2.2.4, 2.2.5, 2.2.6, 2.3.0, 2.3.1, 2.3.2, 2.3.3, 2.3.4, 2.3.5, 2.4.0, 2.4.1, 2.4.2, 2.4.4, 2.4.5, 2.4.7, 2.4.8, 2.4.9, 2.4.10, 2.4.11, 2.5.0, 2.5.1, 2.5.2, 2.5.3, 2.5.4, 2.5.5, 2.5.6, 2.5.7, 2.5.8, 2.5.9, 2.5.10, 2.5.11, 2.5.12, 2.5.14, 2.6.0a1, 2.6.0b1, 2.6.0, 2.6.1, 2.6.2, 2.6.3, 2.6.4, 3.0.0, 3.0.1, 3.0.2, 3.0.3, 3.0.4, 3.0.5, 3.0.6, 3.0.7, 3.0.9, 3.0.10, 3.1.0, 3.1.1, 3.1.2, 3.1.3, 3.1.4, 3.1.5)
+backend-tests	Install dependencies	2026-04-01T09:11:20.9898323Z ERROR: No matching distribution found for openpyxl>=3.2.0
+backend-tests	Install dependencies	2026-04-01T09:11:21.1686087Z ##[error]Process completed with exit code 1.
+backend-tests	Post Run actions/checkout@v4	﻿2026-04-01T09:11:21.1802817Z Post job cleanup.
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.2681452Z [command]/usr/bin/git version
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.2716786Z git version 2.53.0
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.2760162Z Temporarily overriding HOME='/home/runner/work/_temp/0d5d3a00-75f5-4fd3-8dc9-c17ea6536ca5' before making global git config changes
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.2762170Z Adding repository directory to the temporary git global config as a safe directory
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.2767485Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Workbench/Workbench
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.2808413Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.2837557Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.3135001Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.3165721Z http.https://github.com/.extraheader
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.3185028Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.3225392Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.3503473Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+backend-tests	Post Run actions/checkout@v4	2026-04-01T09:11:21.3552479Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+backend-tests	Complete job	﻿2026-04-01T09:11:21.3965660Z Cleaning up orphan processes
+backend-tests	Complete job	2026-04-01T09:11:21.4171658Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-python@v5. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+connector-smoke-test	Set up job	﻿2026-04-01T09:11:18.7615710Z Current runner version: '2.333.1'
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7699191Z ##[group]Runner Image Provisioner
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7700488Z Hosted Compute Agent
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7701675Z Version: 20260213.493
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7702787Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7703991Z Build Date: 2026-02-13T00:28:41Z
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7705124Z Worker ID: {165f9097-5d0e-4fe1-a8b5-8228a92591b3}
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7706286Z Azure Region: northcentralus
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7707407Z ##[endgroup]
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7709854Z ##[group]Operating System
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7710810Z Ubuntu
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7732099Z 24.04.4
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7733129Z LTS
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7734071Z ##[endgroup]
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7734830Z ##[group]Runner Image
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7736020Z Image: ubuntu-24.04
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7736855Z Version: 20260323.65.1
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7738631Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260323.65/images/ubuntu/Ubuntu2404-Readme.md
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7741928Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260323.65
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7743632Z ##[endgroup]
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7745450Z ##[group]GITHUB_TOKEN Permissions
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7748362Z Contents: read
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7749412Z Metadata: read
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7750330Z Packages: read
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7751102Z ##[endgroup]
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7774336Z Secret source: Actions
+connector-smoke-test	Set up job	2026-04-01T09:11:18.7775834Z Prepare workflow directory
+connector-smoke-test	Set up job	2026-04-01T09:11:18.8943833Z Prepare all required actions
+connector-smoke-test	Set up job	2026-04-01T09:11:18.9049633Z Getting action download info
+connector-smoke-test	Set up job	2026-04-01T09:11:19.2635176Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+connector-smoke-test	Set up job	2026-04-01T09:11:19.4207792Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+connector-smoke-test	Set up job	2026-04-01T09:11:19.6020925Z Complete job name: connector-smoke-test
+connector-smoke-test	Run actions/checkout@v4	﻿2026-04-01T09:11:19.6692349Z ##[group]Run actions/checkout@v4
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6693212Z with:
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6693602Z   repository: Jatink1210/Workbench
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6694231Z   token: ***
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6694589Z   ssh-strict: true
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6694970Z   ssh-user: git
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6695350Z   persist-credentials: true
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6695780Z   clean: true
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6696160Z   sparse-checkout-cone-mode: true
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6696621Z   fetch-depth: 1
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6696985Z   fetch-tags: false
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6697369Z   show-progress: true
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6697748Z   lfs: false
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6698105Z   submodules: false
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6698497Z   set-safe-directory: true
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.6699106Z ##[endgroup]
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.7937345Z Syncing repository: Jatink1210/Workbench
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.7940393Z ##[group]Getting Git version info
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.7941898Z Working directory is '/home/runner/work/Workbench/Workbench'
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.7943594Z [command]/usr/bin/git version
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.7964753Z git version 2.53.0
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.7967198Z ##[endgroup]
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.7973330Z Temporarily overriding HOME='/home/runner/work/_temp/b0e6d454-493b-4d0c-b953-283111a73123' before making global git config changes
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.7975567Z Adding repository directory to the temporary git global config as a safe directory
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8817699Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Workbench/Workbench
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8831848Z Deleting the contents of '/home/runner/work/Workbench/Workbench'
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8833910Z ##[group]Initializing the repository
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8835256Z [command]/usr/bin/git init /home/runner/work/Workbench/Workbench
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8836838Z hint: Using 'master' as the name for the initial branch. This default branch name
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8838678Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8840322Z hint: to use in all of your new repositories, which will suppress this warning,
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8842674Z hint: call:
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8843284Z hint:
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8844014Z hint: 	git config --global init.defaultBranch <name>
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8844955Z hint:
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8845854Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8847390Z hint: 'development'. The just-created branch can be renamed via this command:
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8848636Z hint:
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8849307Z hint: 	git branch -m <name>
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8850166Z hint:
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8851160Z hint: Disable this message with "git config set advice.defaultBranchName false"
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8853105Z Initialized empty Git repository in /home/runner/work/Workbench/Workbench/.git/
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8855628Z [command]/usr/bin/git remote add origin https://github.com/Jatink1210/Workbench
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8858517Z ##[endgroup]
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8859718Z ##[group]Disabling automatic garbage collection
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8861043Z [command]/usr/bin/git config --local gc.auto 0
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8864033Z ##[endgroup]
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8865164Z ##[group]Setting up auth
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8867160Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8870746Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8889128Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.8894493Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.9080118Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.9112529Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.9362980Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.9398684Z ##[endgroup]
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.9401052Z ##[group]Fetching the repository
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:19.9409223Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +694d3a74a0f16ec3b16f98722f88a728990c348c:refs/remotes/origin/main
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4413919Z From https://github.com/Jatink1210/Workbench
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4434195Z  * [new ref]         694d3a74a0f16ec3b16f98722f88a728990c348c -> origin/main
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4472867Z ##[endgroup]
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4475994Z ##[group]Determining the checkout info
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4478992Z ##[endgroup]
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4481978Z [command]/usr/bin/git sparse-checkout disable
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4543496Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4583094Z ##[group]Checking out the ref
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4595322Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4936675Z Switched to a new branch 'main'
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4940707Z branch 'main' set up to track 'origin/main'.
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4953378Z ##[endgroup]
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.4990614Z [command]/usr/bin/git log -1 --format=%H
+connector-smoke-test	Run actions/checkout@v4	2026-04-01T09:11:20.5015021Z 694d3a74a0f16ec3b16f98722f88a728990c348c
+connector-smoke-test	Run actions/setup-python@v5	﻿2026-04-01T09:11:20.5335629Z ##[group]Run actions/setup-python@v5
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.5336855Z with:
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.5337649Z   python-version: 3.11
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.5338611Z   check-latest: false
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.5339809Z   token: ***
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.5340670Z   update-environment: true
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.5341893Z   allow-prereleases: false
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.5342913Z   freethreaded: false
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.5343820Z ##[endgroup]
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.7023120Z ##[group]Installed versions
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.7137010Z Successfully set up CPython (3.11.15)
+connector-smoke-test	Run actions/setup-python@v5	2026-04-01T09:11:20.7145989Z ##[endgroup]
+connector-smoke-test	Install dependencies	﻿2026-04-01T09:11:20.7294437Z ##[group]Run pip install httpx structlog
+connector-smoke-test	Install dependencies	2026-04-01T09:11:20.7295773Z [36;1mpip install httpx structlog[0m
+connector-smoke-test	Install dependencies	2026-04-01T09:11:20.7341545Z shell: /usr/bin/bash -e {0}
+connector-smoke-test	Install dependencies	2026-04-01T09:11:20.7342589Z env:
+connector-smoke-test	Install dependencies	2026-04-01T09:11:20.7343615Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+connector-smoke-test	Install dependencies	2026-04-01T09:11:20.7345427Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+connector-smoke-test	Install dependencies	2026-04-01T09:11:20.7347229Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+connector-smoke-test	Install dependencies	2026-04-01T09:11:20.7348852Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+connector-smoke-test	Install dependencies	2026-04-01T09:11:20.7350462Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+connector-smoke-test	Install dependencies	2026-04-01T09:11:20.7352225Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+connector-smoke-test	Install dependencies	2026-04-01T09:11:20.7353578Z ##[endgroup]
+connector-smoke-test	Install dependencies	2026-04-01T09:11:21.9516278Z Collecting httpx
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.0384749Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.0672768Z Collecting structlog
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.0717329Z   Downloading structlog-25.5.0-py3-none-any.whl.metadata (9.5 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.1015848Z Collecting anyio (from httpx)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.1059993Z   Downloading anyio-4.13.0-py3-none-any.whl.metadata (4.5 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.1367670Z Collecting certifi (from httpx)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.1414876Z   Downloading certifi-2026.2.25-py3-none-any.whl.metadata (2.5 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.1662266Z Collecting httpcore==1.* (from httpx)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.1705496Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.1915555Z Collecting idna (from httpx)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.1947778Z   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2061612Z Collecting h11>=0.16 (from httpcore==1.*->httpx)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2095156Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2271069Z Collecting typing_extensions>=4.5 (from anyio->httpx)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2303642Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2378701Z Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2478227Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2542901Z Downloading structlog-25.5.0-py3-none-any.whl (72 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2597208Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2651030Z Downloading anyio-4.13.0-py3-none-any.whl (114 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2707715Z Downloading idna-3.11-py3-none-any.whl (71 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2782223Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.2838430Z Downloading certifi-2026.2.25-py3-none-any.whl (153 kB)
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.3172586Z Installing collected packages: typing_extensions, structlog, idna, h11, certifi, httpcore, anyio, httpx
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.7013066Z 
+connector-smoke-test	Install dependencies	2026-04-01T09:11:22.7026291Z Successfully installed anyio-4.13.0 certifi-2026.2.25 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 idna-3.11 structlog-25.5.0 typing_extensions-4.15.0
+connector-smoke-test	Smoke test connectors	﻿2026-04-01T09:11:22.8462985Z ##[group]Run python -c "
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8463319Z [36;1mpython -c "[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8463571Z [36;1mimport asyncio, httpx[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8463815Z [36;1masync def test():[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8464166Z [36;1m    async with httpx.AsyncClient(timeout=10) as c:[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8464867Z [36;1m        r = await c.get('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi', params={'db':'pubmed','term':'EGFR','retmax':1,'retmode':'json'})[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8465531Z [36;1m        assert r.status_code == 200, 'PubMed failed'[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8466080Z [36;1m        r = await c.get('https://rest.uniprot.org/uniprotkb/search', params={'query':'EGFR','size':1,'format':'json'})[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8466660Z [36;1m        assert r.status_code == 200, 'UniProt failed'[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8467070Z [36;1m        r = await c.get('https://data.rcsb.org/rest/v1/core/entry/1EGF')[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8467729Z [36;1m        assert r.status_code == 200, 'RCSB failed'[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8468107Z [36;1m        print('All connector smoke tests passed!')[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8468421Z [36;1masyncio.run(test())[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8468629Z [36;1m"[0m
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8496728Z shell: /usr/bin/bash -e {0}
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8496970Z env:
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8497218Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8497637Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8498059Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8498417Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8498774Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8499135Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:22.8499438Z ##[endgroup]
+connector-smoke-test	Smoke test connectors	2026-04-01T09:11:24.5867563Z All connector smoke tests passed!
+connector-smoke-test	Post Run actions/setup-python@v5	﻿2026-04-01T09:11:24.6290620Z Post job cleanup.
+connector-smoke-test	Post Run actions/checkout@v4	﻿2026-04-01T09:11:24.7952950Z Post job cleanup.
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.8934513Z [command]/usr/bin/git version
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.8974688Z git version 2.53.0
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9022671Z Temporarily overriding HOME='/home/runner/work/_temp/22d8f489-738a-414b-8a28-4dc89107be87' before making global git config changes
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9024060Z Adding repository directory to the temporary git global config as a safe directory
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9030416Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Workbench/Workbench
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9075499Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9110923Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9477207Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9509629Z http.https://github.com/.extraheader
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9533862Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9582208Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9948157Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+connector-smoke-test	Post Run actions/checkout@v4	2026-04-01T09:11:24.9982079Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+connector-smoke-test	Complete job	﻿2026-04-01T09:11:25.0327750Z Cleaning up orphan processes
+connector-smoke-test	Complete job	2026-04-01T09:11:25.0586946Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-python@v5. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+frontend-build	Set up job	﻿2026-04-01T09:11:11.1604324Z Current runner version: '2.333.1'
+frontend-build	Set up job	2026-04-01T09:11:11.1638899Z ##[group]Runner Image Provisioner
+frontend-build	Set up job	2026-04-01T09:11:11.1640131Z Hosted Compute Agent
+frontend-build	Set up job	2026-04-01T09:11:11.1640982Z Version: 20260213.493
+frontend-build	Set up job	2026-04-01T09:11:11.1641875Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+frontend-build	Set up job	2026-04-01T09:11:11.1642895Z Build Date: 2026-02-13T00:28:41Z
+frontend-build	Set up job	2026-04-01T09:11:11.1643829Z Worker ID: {15a47fe8-4770-4088-86c9-12a49da47426}
+frontend-build	Set up job	2026-04-01T09:11:11.1644922Z Azure Region: westcentralus
+frontend-build	Set up job	2026-04-01T09:11:11.1645743Z ##[endgroup]
+frontend-build	Set up job	2026-04-01T09:11:11.1648052Z ##[group]Operating System
+frontend-build	Set up job	2026-04-01T09:11:11.1648876Z Ubuntu
+frontend-build	Set up job	2026-04-01T09:11:11.1649657Z 24.04.4
+frontend-build	Set up job	2026-04-01T09:11:11.1650365Z LTS
+frontend-build	Set up job	2026-04-01T09:11:11.1650973Z ##[endgroup]
+frontend-build	Set up job	2026-04-01T09:11:11.1651788Z ##[group]Runner Image
+frontend-build	Set up job	2026-04-01T09:11:11.1652565Z Image: ubuntu-24.04
+frontend-build	Set up job	2026-04-01T09:11:11.1653269Z Version: 20260323.65.1
+frontend-build	Set up job	2026-04-01T09:11:11.1655612Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260323.65/images/ubuntu/Ubuntu2404-Readme.md
+frontend-build	Set up job	2026-04-01T09:11:11.1658261Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260323.65
+frontend-build	Set up job	2026-04-01T09:11:11.1659782Z ##[endgroup]
+frontend-build	Set up job	2026-04-01T09:11:11.1661391Z ##[group]GITHUB_TOKEN Permissions
+frontend-build	Set up job	2026-04-01T09:11:11.1664265Z Contents: read
+frontend-build	Set up job	2026-04-01T09:11:11.1665067Z Metadata: read
+frontend-build	Set up job	2026-04-01T09:11:11.1665815Z Packages: read
+frontend-build	Set up job	2026-04-01T09:11:11.1666531Z ##[endgroup]
+frontend-build	Set up job	2026-04-01T09:11:11.1669872Z Secret source: Actions
+frontend-build	Set up job	2026-04-01T09:11:11.1670884Z Prepare workflow directory
+frontend-build	Set up job	2026-04-01T09:11:11.2305633Z Prepare all required actions
+frontend-build	Set up job	2026-04-01T09:11:11.2363036Z Getting action download info
+frontend-build	Set up job	2026-04-01T09:11:11.7663545Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+frontend-build	Set up job	2026-04-01T09:11:11.8921922Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+frontend-build	Set up job	2026-04-01T09:11:12.0500423Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+frontend-build	Set up job	2026-04-01T09:11:12.3184226Z Complete job name: frontend-build
+frontend-build	Run actions/checkout@v4	﻿2026-04-01T09:11:12.3818601Z ##[group]Run actions/checkout@v4
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3819577Z with:
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3820007Z   repository: Jatink1210/Workbench
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3820853Z   token: ***
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3821325Z   ssh-strict: true
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3821723Z   ssh-user: git
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3822182Z   persist-credentials: true
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3822624Z   clean: true
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3823062Z   sparse-checkout-cone-mode: true
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3823529Z   fetch-depth: 1
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3823979Z   fetch-tags: false
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3824383Z   show-progress: true
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3824820Z   lfs: false
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3825235Z   submodules: false
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3825635Z   set-safe-directory: true
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.3826353Z ##[endgroup]
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5010666Z Syncing repository: Jatink1210/Workbench
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5013763Z ##[group]Getting Git version info
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5014852Z Working directory is '/home/runner/work/Workbench/Workbench'
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5016561Z [command]/usr/bin/git version
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5043882Z git version 2.53.0
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5076269Z ##[endgroup]
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5257532Z Temporarily overriding HOME='/home/runner/work/_temp/00880e0f-9652-490b-8a7e-dc2c4eb7796e' before making global git config changes
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5261390Z Adding repository directory to the temporary git global config as a safe directory
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5263089Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Workbench/Workbench
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5267470Z Deleting the contents of '/home/runner/work/Workbench/Workbench'
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5270188Z ##[group]Initializing the repository
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5271926Z [command]/usr/bin/git init /home/runner/work/Workbench/Workbench
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5310307Z hint: Using 'master' as the name for the initial branch. This default branch name
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5314733Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5316433Z hint: to use in all of your new repositories, which will suppress this warning,
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5319455Z hint: call:
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5320048Z hint:
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5320928Z hint: 	git config --global init.defaultBranch <name>
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5321782Z hint:
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5322588Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5323814Z hint: 'development'. The just-created branch can be renamed via this command:
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5324860Z hint:
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5325417Z hint: 	git branch -m <name>
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5326800Z hint:
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5327744Z hint: Disable this message with "git config set advice.defaultBranchName false"
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5329382Z Initialized empty Git repository in /home/runner/work/Workbench/Workbench/.git/
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5331659Z [command]/usr/bin/git remote add origin https://github.com/Jatink1210/Workbench
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5361311Z ##[endgroup]
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5362487Z ##[group]Disabling automatic garbage collection
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5364666Z [command]/usr/bin/git config --local gc.auto 0
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5396736Z ##[endgroup]
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5398029Z ##[group]Setting up auth
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5403406Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5436598Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5707393Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5741313Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5939211Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.5972470Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.6185399Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.6218683Z ##[endgroup]
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.6220428Z ##[group]Fetching the repository
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:12.6228548Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +694d3a74a0f16ec3b16f98722f88a728990c348c:refs/remotes/origin/main
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.5892557Z From https://github.com/Jatink1210/Workbench
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.5899003Z  * [new ref]         694d3a74a0f16ec3b16f98722f88a728990c348c -> origin/main
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.5930135Z ##[endgroup]
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.5935156Z ##[group]Determining the checkout info
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.5937020Z ##[endgroup]
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.5938430Z [command]/usr/bin/git sparse-checkout disable
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.5976162Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.6001665Z ##[group]Checking out the ref
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.6008268Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.6206752Z Switched to a new branch 'main'
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.6219801Z branch 'main' set up to track 'origin/main'.
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.6224067Z ##[endgroup]
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.6257146Z [command]/usr/bin/git log -1 --format=%H
+frontend-build	Run actions/checkout@v4	2026-04-01T09:11:13.6293053Z 694d3a74a0f16ec3b16f98722f88a728990c348c
+frontend-build	Run actions/setup-node@v4	﻿2026-04-01T09:11:13.6552946Z ##[group]Run actions/setup-node@v4
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:13.6553825Z with:
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:13.6554515Z   node-version: 20
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:13.6555208Z   always-auth: false
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:13.6555929Z   check-latest: false
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:13.6556855Z   token: ***
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:13.6557519Z ##[endgroup]
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:13.8496109Z Found in cache @ /opt/hostedtoolcache/node/20.20.1/x64
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:13.8510271Z ##[group]Environment details
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:18.8341496Z node: v20.20.1
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:18.8344725Z npm: 10.8.2
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:18.8345118Z yarn: 1.22.22
+frontend-build	Run actions/setup-node@v4	2026-04-01T09:11:18.8346713Z ##[endgroup]
+frontend-build	Install dependencies	﻿2026-04-01T09:11:18.8457305Z ##[group]Run npm install --legacy-peer-deps
+frontend-build	Install dependencies	2026-04-01T09:11:18.8458012Z [36;1mnpm install --legacy-peer-deps[0m
+frontend-build	Install dependencies	2026-04-01T09:11:18.8489705Z shell: /usr/bin/bash -e {0}
+frontend-build	Install dependencies	2026-04-01T09:11:18.8490123Z ##[endgroup]
+frontend-build	Install dependencies	2026-04-01T09:11:38.3281187Z 
+frontend-build	Install dependencies	2026-04-01T09:11:38.3305456Z added 471 packages, and audited 472 packages in 19s
+frontend-build	Install dependencies	2026-04-01T09:11:38.3318657Z 
+frontend-build	Install dependencies	2026-04-01T09:11:38.3319230Z 113 packages are looking for funding
+frontend-build	Install dependencies	2026-04-01T09:11:38.3319831Z   run `npm fund` for details
+frontend-build	Install dependencies	2026-04-01T09:11:38.3320267Z 
+frontend-build	Install dependencies	2026-04-01T09:11:38.3321876Z 1 high severity vulnerability
+frontend-build	Install dependencies	2026-04-01T09:11:38.3322250Z 
+frontend-build	Install dependencies	2026-04-01T09:11:38.3322466Z To address all issues, run:
+frontend-build	Install dependencies	2026-04-01T09:11:38.3322890Z   npm audit fix
+frontend-build	Install dependencies	2026-04-01T09:11:38.3323094Z 
+frontend-build	Install dependencies	2026-04-01T09:11:38.3323329Z Run `npm audit` for details.
+frontend-build	Build frontend	﻿2026-04-01T09:11:38.3485183Z ##[group]Run npm run build
+frontend-build	Build frontend	2026-04-01T09:11:38.3485482Z [36;1mnpm run build[0m
+frontend-build	Build frontend	2026-04-01T09:11:38.3504163Z shell: /usr/bin/bash -e {0}
+frontend-build	Build frontend	2026-04-01T09:11:38.3504434Z ##[endgroup]
+frontend-build	Build frontend	2026-04-01T09:11:38.4536067Z 
+frontend-build	Build frontend	2026-04-01T09:11:38.4537671Z > drug-designer-web@1.0.0 build
+frontend-build	Build frontend	2026-04-01T09:11:38.4538444Z > tsc -b && vite build
+frontend-build	Build frontend	2026-04-01T09:11:38.4538708Z 
+frontend-build	Build frontend	2026-04-01T09:11:40.7810050Z ##[error]tsconfig.json(23,9): error TS5101: Option 'baseUrl' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '"ignoreDeprecations": "6.0"' to silence this error.
+frontend-build	Build frontend	2026-04-01T09:11:40.7822669Z   Visit https://aka.ms/ts6 for migration information.
+frontend-build	Build frontend	2026-04-01T09:11:40.7983555Z ##[error]Process completed with exit code 1.
+frontend-build	Post Run actions/checkout@v4	﻿2026-04-01T09:11:40.8086910Z Post job cleanup.
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.8984998Z [command]/usr/bin/git version
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9022369Z git version 2.53.0
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9065181Z Temporarily overriding HOME='/home/runner/work/_temp/c503fbd7-c9b2-44ec-a8e6-42c2b503e35f' before making global git config changes
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9068308Z Adding repository directory to the temporary git global config as a safe directory
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9072558Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Workbench/Workbench
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9115589Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9146910Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9350430Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9370827Z http.https://github.com/.extraheader
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9384777Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9416129Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9598960Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+frontend-build	Post Run actions/checkout@v4	2026-04-01T09:11:40.9629198Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+frontend-build	Complete job	﻿2026-04-01T09:11:40.9912865Z Cleaning up orphan processes
+frontend-build	Complete job	2026-04-01T09:11:41.0112651Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-node@v4. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

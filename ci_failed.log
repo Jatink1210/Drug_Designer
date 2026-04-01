@@ -1,0 +1,93 @@
+backend-tests	Install dependencies	﻿2026-04-01T09:11:13.4310087Z ##[group]Run pip install -r requirements.txt
+backend-tests	Install dependencies	2026-04-01T09:11:13.4311359Z [36;1mpip install -r requirements.txt[0m
+backend-tests	Install dependencies	2026-04-01T09:11:13.4312460Z [36;1mpip install pytest pytest-asyncio httpx[0m
+backend-tests	Install dependencies	2026-04-01T09:11:13.4343760Z shell: /usr/bin/bash -e {0}
+backend-tests	Install dependencies	2026-04-01T09:11:13.4344635Z env:
+backend-tests	Install dependencies	2026-04-01T09:11:13.4345444Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+backend-tests	Install dependencies	2026-04-01T09:11:13.4347231Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+backend-tests	Install dependencies	2026-04-01T09:11:13.4348740Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+backend-tests	Install dependencies	2026-04-01T09:11:13.4350100Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+backend-tests	Install dependencies	2026-04-01T09:11:13.4351458Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+backend-tests	Install dependencies	2026-04-01T09:11:13.4352834Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+backend-tests	Install dependencies	2026-04-01T09:11:13.4353963Z ##[endgroup]
+backend-tests	Install dependencies	2026-04-01T09:11:14.5188495Z Collecting fastapi>=0.135.2 (from -r requirements.txt (line 1))
+backend-tests	Install dependencies	2026-04-01T09:11:14.6064016Z   Downloading fastapi-0.135.2-py3-none-any.whl.metadata (28 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.6638173Z Collecting uvicorn>=0.42.0 (from uvicorn[standard]>=0.42.0->-r requirements.txt (line 2))
+backend-tests	Install dependencies	2026-04-01T09:11:14.6743058Z   Downloading uvicorn-0.42.0-py3-none-any.whl.metadata (6.7 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.7943092Z Collecting pydantic>=2.12.5 (from -r requirements.txt (line 3))
+backend-tests	Install dependencies	2026-04-01T09:11:14.8053399Z   Downloading pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.8438094Z Collecting pydantic-settings>=2.13.1 (from -r requirements.txt (line 4))
+backend-tests	Install dependencies	2026-04-01T09:11:14.8544013Z   Downloading pydantic_settings-2.13.1-py3-none-any.whl.metadata (3.4 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.8769547Z Collecting platformdirs>=4.9.4 (from -r requirements.txt (line 5))
+backend-tests	Install dependencies	2026-04-01T09:11:14.8881922Z   Downloading platformdirs-4.9.4-py3-none-any.whl.metadata (4.7 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.9088797Z Collecting httpx>=0.28.1 (from -r requirements.txt (line 6))
+backend-tests	Install dependencies	2026-04-01T09:11:14.9192671Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.9391582Z Collecting aiosqlite>=0.22.1 (from -r requirements.txt (line 7))
+backend-tests	Install dependencies	2026-04-01T09:11:14.9504879Z   Downloading aiosqlite-0.22.1-py3-none-any.whl.metadata (4.3 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:14.9848419Z Collecting qdrant-client>=1.17.1 (from -r requirements.txt (line 8))
+backend-tests	Install dependencies	2026-04-01T09:11:14.9954283Z   Downloading qdrant_client-1.17.1-py3-none-any.whl.metadata (11 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:15.0184445Z Collecting llama-cpp-python>=0.3.18 (from -r requirements.txt (line 9))
+backend-tests	Install dependencies	2026-04-01T09:11:15.0314999Z   Downloading llama_cpp_python-0.3.19.tar.gz (59.0 MB)
+backend-tests	Install dependencies	2026-04-01T09:11:16.2903884Z      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 59.0/59.0 MB 48.0 MB/s  0:00:01
+backend-tests	Install dependencies	2026-04-01T09:11:17.6458674Z   Installing build dependencies: started
+backend-tests	Install dependencies	2026-04-01T09:11:18.5088960Z   Installing build dependencies: finished with status 'done'
+backend-tests	Install dependencies	2026-04-01T09:11:18.5098108Z   Getting requirements to build wheel: started
+backend-tests	Install dependencies	2026-04-01T09:11:19.0688172Z   Getting requirements to build wheel: finished with status 'done'
+backend-tests	Install dependencies	2026-04-01T09:11:19.0690640Z   Preparing metadata (pyproject.toml): started
+backend-tests	Install dependencies	2026-04-01T09:11:19.3299083Z   Preparing metadata (pyproject.toml): finished with status 'done'
+backend-tests	Install dependencies	2026-04-01T09:11:19.4735533Z Collecting PyMuPDF>=1.27.2.2 (from -r requirements.txt (line 12))
+backend-tests	Install dependencies	2026-04-01T09:11:19.4846512Z   Downloading pymupdf-1.27.2.2-cp310-abi3-manylinux_2_28_x86_64.whl.metadata (3.4 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.5014046Z Collecting python-multipart>=0.0.22 (from -r requirements.txt (line 13))
+backend-tests	Install dependencies	2026-04-01T09:11:19.5115031Z   Downloading python_multipart-0.0.22-py3-none-any.whl.metadata (1.8 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.5405370Z Collecting redis>=7.4.0 (from -r requirements.txt (line 14))
+backend-tests	Install dependencies	2026-04-01T09:11:19.5508959Z   Downloading redis-7.4.0-py3-none-any.whl.metadata (12 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.5753400Z Collecting structlog>=25.5.0 (from -r requirements.txt (line 15))
+backend-tests	Install dependencies	2026-04-01T09:11:19.5860468Z   Downloading structlog-25.5.0-py3-none-any.whl.metadata (9.5 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.6053270Z Collecting tenacity>=9.1.4 (from -r requirements.txt (line 16))
+backend-tests	Install dependencies	2026-04-01T09:11:19.6168960Z   Downloading tenacity-9.1.4-py3-none-any.whl.metadata (1.2 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.6380006Z Collecting arq>=0.27.0 (from -r requirements.txt (line 17))
+backend-tests	Install dependencies	2026-04-01T09:11:19.6491235Z   Downloading arq-0.27.0-py3-none-any.whl.metadata (2.8 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.6680153Z Collecting neo4j>=6.1.0 (from -r requirements.txt (line 18))
+backend-tests	Install dependencies	2026-04-01T09:11:19.6788132Z   Downloading neo4j-6.1.0-py3-none-any.whl.metadata (5.3 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.7104654Z Collecting pytest>=9.0.2 (from -r requirements.txt (line 19))
+backend-tests	Install dependencies	2026-04-01T09:11:19.7210507Z   Downloading pytest-9.0.2-py3-none-any.whl.metadata (7.6 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.7428286Z Collecting pytest-asyncio>=1.3.0 (from -r requirements.txt (line 20))
+backend-tests	Install dependencies	2026-04-01T09:11:19.7532201Z   Downloading pytest_asyncio-1.3.0-py3-none-any.whl.metadata (4.1 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:19.7731321Z Collecting pytest-cov>=7.1.0 (from -r requirements.txt (line 21))
+backend-tests	Install dependencies	2026-04-01T09:11:19.7841512Z   Downloading pytest_cov-7.1.0-py3-none-any.whl.metadata (32 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.1108342Z Collecting ruff>=0.15.7 (from -r requirements.txt (line 22))
+backend-tests	Install dependencies	2026-04-01T09:11:20.1218916Z   Downloading ruff-0.15.8-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (26 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.1727229Z Collecting black>=26.3.1 (from -r requirements.txt (line 23))
+backend-tests	Install dependencies	2026-04-01T09:11:20.1832218Z   Downloading black-26.3.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.2389440Z Collecting torch>=2.11.0 (from -r requirements.txt (line 24))
+backend-tests	Install dependencies	2026-04-01T09:11:20.2507999Z   Downloading torch-2.11.0-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (29 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.3103142Z Collecting transformers>=5.3.0 (from -r requirements.txt (line 25))
+backend-tests	Install dependencies	2026-04-01T09:11:20.3205776Z   Downloading transformers-5.4.0-py3-none-any.whl.metadata (32 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.3798391Z Collecting accelerate>=1.13.0 (from -r requirements.txt (line 26))
+backend-tests	Install dependencies	2026-04-01T09:11:20.3904365Z   Downloading accelerate-1.13.0-py3-none-any.whl.metadata (19 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.4503369Z Collecting rdkit>=2025.9.6 (from -r requirements.txt (line 27))
+backend-tests	Install dependencies	2026-04-01T09:11:20.4612699Z   Downloading rdkit-2025.9.6-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.5770438Z Collecting matplotlib>=3.10.8 (from -r requirements.txt (line 30))
+backend-tests	Install dependencies	2026-04-01T09:11:20.5884971Z   Downloading matplotlib-3.10.8-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (52 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.6265547Z Collecting plotly>=6.6.0 (from -r requirements.txt (line 31))
+backend-tests	Install dependencies	2026-04-01T09:11:20.6372854Z   Downloading plotly-6.6.0-py3-none-any.whl.metadata (8.5 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.6629974Z Collecting networkx>=3.6.1 (from -r requirements.txt (line 32))
+backend-tests	Install dependencies	2026-04-01T09:11:20.6735557Z   Downloading networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.7786227Z Collecting pandas>=3.0.1 (from -r requirements.txt (line 33))
+backend-tests	Install dependencies	2026-04-01T09:11:20.7891541Z   Downloading pandas-3.0.2-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (79 kB)
+backend-tests	Install dependencies	2026-04-01T09:11:20.8339641Z ERROR: Ignored the following yanked versions: 3.2.0b1
+backend-tests	Install dependencies	2026-04-01T09:11:20.8347076Z ERROR: Ignored the following versions that require a different python version: 0.11.10 Requires-Python >=3.7,<=3.11; 1.0.0 Requires-Python >=3.7,<=3.11; 1.0.1 Requires-Python >=3.7,<=3.11; 1.0.2 Requires-Python >=3.7,<=3.11
+backend-tests	Install dependencies	2026-04-01T09:11:20.8351680Z ERROR: Could not find a version that satisfies the requirement openpyxl>=3.2.0 (from versions: 1.1.0, 1.1.4, 1.1.5, 1.1.6, 1.1.7, 1.2.3, 1.5.0, 1.5.1, 1.5.2, 1.5.3, 1.5.4, 1.5.5, 1.5.6, 1.5.7, 1.5.8, 1.6.1, 1.6.2, 1.7.0, 1.8.0, 1.8.1, 1.8.2, 1.8.3, 1.8.4, 1.8.5, 1.8.6, 2.0.2, 2.0.3, 2.0.4, 2.0.5, 2.1.0, 2.1.1, 2.1.2, 2.1.3, 2.1.4, 2.1.5, 2.2.0, 2.2.1, 2.2.2, 2.2.3, 2.2.4, 2.2.5, 2.2.6, 2.3.0, 2.3.1, 2.3.2, 2.3.3, 2.3.4, 2.3.5, 2.4.0, 2.4.1, 2.4.2, 2.4.4, 2.4.5, 2.4.7, 2.4.8, 2.4.9, 2.4.10, 2.4.11, 2.5.0, 2.5.1, 2.5.2, 2.5.3, 2.5.4, 2.5.5, 2.5.6, 2.5.7, 2.5.8, 2.5.9, 2.5.10, 2.5.11, 2.5.12, 2.5.14, 2.6.0a1, 2.6.0b1, 2.6.0, 2.6.1, 2.6.2, 2.6.3, 2.6.4, 3.0.0, 3.0.1, 3.0.2, 3.0.3, 3.0.4, 3.0.5, 3.0.6, 3.0.7, 3.0.9, 3.0.10, 3.1.0, 3.1.1, 3.1.2, 3.1.3, 3.1.4, 3.1.5)
+backend-tests	Install dependencies	2026-04-01T09:11:20.9898323Z ERROR: No matching distribution found for openpyxl>=3.2.0
+backend-tests	Install dependencies	2026-04-01T09:11:21.1686087Z ##[error]Process completed with exit code 1.
+frontend-build	Build frontend	﻿2026-04-01T09:11:38.3485183Z ##[group]Run npm run build
+frontend-build	Build frontend	2026-04-01T09:11:38.3485482Z [36;1mnpm run build[0m
+frontend-build	Build frontend	2026-04-01T09:11:38.3504163Z shell: /usr/bin/bash -e {0}
+frontend-build	Build frontend	2026-04-01T09:11:38.3504434Z ##[endgroup]
+frontend-build	Build frontend	2026-04-01T09:11:38.4536067Z 
+frontend-build	Build frontend	2026-04-01T09:11:38.4537671Z > drug-designer-web@1.0.0 build
+frontend-build	Build frontend	2026-04-01T09:11:38.4538444Z > tsc -b && vite build
+frontend-build	Build frontend	2026-04-01T09:11:38.4538708Z 
+frontend-build	Build frontend	2026-04-01T09:11:40.7810050Z ##[error]tsconfig.json(23,9): error TS5101: Option 'baseUrl' is deprecated and will stop functioning in TypeScript 7.0. Specify compilerOption '"ignoreDeprecations": "6.0"' to silence this error.
+frontend-build	Build frontend	2026-04-01T09:11:40.7822669Z   Visit https://aka.ms/ts6 for migration information.
+frontend-build	Build frontend	2026-04-01T09:11:40.7983555Z ##[error]Process completed with exit code 1.

@@ -1,0 +1,17 @@
+
+> drug-designer-web@1.0.0 build
+> tsc -b && vite build
+
+[36mvite v8.0.2 [32mbuilding client environment for production...[36m[39m
+Warning: Invalid output options (1 issue found)
+- For the "manualChunks". Invalid type: Expected Function but received Object. 
+[2K
+transforming...Γ£ô 2392 modules transformed.
+<anonymous_script>:0
+
+
+TypeError: manualChunks is not a function
+    at name (file:///C:/Users/Jatin/Desktop/Workbench-main-antigravity/apps/web/node_modules/rolldown/dist/shared/rolldown-build-CL9PyQ2E.mjs:3104:10)
+    at name (file:///C:/Users/Jatin/Desktop/Workbench-main-antigravity/apps/web/node_modules/rolldown/dist/shared/rolldown-build-CL9PyQ2E.mjs:3115:54)
+
+Node.js v24.14.1
