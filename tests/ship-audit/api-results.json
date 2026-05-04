@@ -1,0 +1,132 @@
+{
+  "pass": 24,
+  "fail": 1,
+  "total": 25,
+  "results": [
+    {
+      "test": "Health",
+      "status": "PASS",
+      "code": 200
+    },
+    {
+      "test": "Health v1",
+      "status": "PASS",
+      "code": 200
+    },
+    {
+      "test": "Diagnostics",
+      "status": "FAIL",
+      "error": "timed out"
+    },
+    {
+      "test": "Settings GET",
+      "status": "PASS",
+      "code": 200
+    },
+    {
+      "test": "Settings Diagnostics",
+      "status": "PASS",
+      "code": 200
+    },
+    {
+      "test": "Plugins",
+      "status": "PASS",
+      "code": 200
+    },
+    {
+      "test": "Descriptors aspirin",
+      "status": "PASS",
+      "code": 200
+    },
+    {
+      "test": "Descriptors ethanol",
+      "status": "PASS",
+      "code": 200
+    },
+    {
+      "test": "Descriptors benzene",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Descriptors caffeine",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Descriptors ibuprofen",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Pathway apoptosis",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Pathway MAPK",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Pathway Wnt",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Pathway cell cycle",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Pathway PI3K",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Graph BRCA1",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Graph TP53",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Graph EGFR",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Clinical create",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "SynthArena create",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Contradictions aspirin",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "PICO metformin",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Source health",
+      "status": "PASS",
+      "code": 429
+    },
+    {
+      "test": "Recent runs",
+      "status": "PASS",
+      "code": 429
+    }
+  ]
+}

@@ -6,30 +6,19 @@ import json
 import os
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
+from models.envelope import build_envelope
+
+from core.rbac import require_role, Role
 
 from config import settings
 from core.cache import get_disk_cache, get_memory_cache
+from services.api_key_manager import get_key_manager
 
-router = APIRouter(prefix="/api/data", tags=["data"])
+router = APIRouter(prefix="/api/v1/data", tags=["data"])
 
-# ── API Key Management ────────────────────────────────────
-
-KEYS_FILE = os.path.join(settings.local_store_path, "api_keys.json")
-
-
-def _load_keys() -> Dict[str, str]:
-    if os.path.exists(KEYS_FILE):
-        with open(KEYS_FILE) as f:
-            return json.load(f)
-    return {}
-
-
-def _save_keys(keys: Dict[str, str]) -> None:
-    os.makedirs(os.path.dirname(KEYS_FILE), exist_ok=True)
-    with open(KEYS_FILE, "w") as f:
-        json.dump(keys, f, indent=2)
+# ── API Key Management (Fernet-encrypted via APIKeyManager) ──
 
 
 class APIKeyUpdate(BaseModel):
@@ -37,30 +26,27 @@ class APIKeyUpdate(BaseModel):
     key: str
 
 
-@router.get("/keys")
-async def list_keys() -> Dict[str, Any]:
+@router.get("/keys", dependencies=[Depends(require_role(Role.VIEWER))])
+async def list_keys(request: Request) -> Dict[str, Any]:
     """List configured API keys (masked)."""
-    keys = _load_keys()
-    masked = {k: v[:4] + "***" + v[-4:] if len(v) > 8 else "***" for k, v in keys.items()}
-    return {"keys": masked, "count": len(keys)}
+    mgr = get_key_manager()
+    services = mgr.list_services()
+    return build_envelope(request, {"keys": {s["service"]: s["masked_key"] for s in services}, "count": len(services)})
 
 
-@router.post("/keys")
-async def set_key(req: APIKeyUpdate) -> Dict[str, str]:
+@router.post("/keys", dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def set_key(req: APIKeyUpdate, request: Request) -> Dict[str, Any]:
     """Set or update an API key."""
-    keys = _load_keys()
-    keys[req.service] = req.key
-    _save_keys(keys)
-    return {"status": "updated", "service": req.service}
+    mgr = get_key_manager()
+    mgr.set_key(req.service, req.key)
+    return build_envelope(request, {"status": "updated", "service": req.service})
 
 
-@router.delete("/keys/{service}")
-async def delete_key(service: str) -> Dict[str, str]:
-    keys = _load_keys()
-    if service in keys:
-        del keys[service]
-        _save_keys(keys)
-    return {"status": "deleted", "service": service}
+@router.delete("/keys/{service}", dependencies=[Depends(require_role(Role.OWNER))])
+async def delete_key(service: str, request: Request) -> Dict[str, Any]:
+    mgr = get_key_manager()
+    mgr.delete_key(service)
+    return build_envelope(request, {"status": "deleted", "service": service})
 
 
 # ── Connector Toggle ──────────────────────────────────────
@@ -102,50 +88,50 @@ class ToggleRequest(BaseModel):
     enabled: bool
 
 
-@router.get("/connectors")
-async def list_connectors() -> List[Dict[str, Any]]:
+@router.get("/connectors", dependencies=[Depends(require_role(Role.VIEWER))])
+async def list_connectors(request: Request) -> Dict[str, Any]:
     """List all connectors with enabled/disabled status."""
     toggles = _load_toggles()
-    return [{**c, "enabled": toggles.get(c["id"], True)} for c in AVAILABLE_CONNECTORS]
+    return build_envelope(request, [{**c, "enabled": toggles.get(c["id"], True)} for c in AVAILABLE_CONNECTORS])
 
 
-@router.post("/connectors/toggle")
-async def toggle_connector(req: ToggleRequest) -> Dict[str, str]:
+@router.post("/connectors/toggle", dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def toggle_connector(req: ToggleRequest, request: Request) -> Dict[str, Any]:
     """Enable or disable a connector."""
     toggles = _load_toggles()
     toggles[req.connector_id] = req.enabled
     _save_toggles(toggles)
-    return {"status": "updated", "connector": req.connector_id, "enabled": str(req.enabled)}
+    return build_envelope(request, {"status": "updated", "connector": req.connector_id, "enabled": str(req.enabled)})
 
 
 # ── Cache Management ──────────────────────────────────────
 
-@router.get("/cache")
-async def cache_status() -> Dict[str, Any]:
+@router.get("/cache", dependencies=[Depends(require_role(Role.VIEWER))])
+async def cache_status(request: Request) -> Dict[str, Any]:
     """Get cache statistics."""
     disk = get_disk_cache()
     mem = get_memory_cache()
-    return {
+    return build_envelope(request, {
         "sqlite": disk.stats(),
         "memory": {"size": len(mem._cache) if hasattr(mem, "_cache") else 0, "max_size": getattr(mem, "_max_size", 2000)},
-    }
+    })
 
 
-@router.delete("/cache")
-async def clear_cache() -> Dict[str, str]:
+@router.delete("/cache", dependencies=[Depends(require_role(Role.OWNER))])
+async def clear_cache(request: Request) -> Dict[str, Any]:
     """Clear all caches."""
     disk = get_disk_cache()
     disk.clear()
     mem = get_memory_cache()
     if hasattr(mem, "clear"):
         mem.clear()
-    return {"status": "cleared"}
+    return build_envelope(request, {"status": "cleared"})
 
 
 # ── Storage ───────────────────────────────────────────────
 
-@router.get("/storage")
-async def storage_stats() -> Dict[str, Any]:
+@router.get("/storage", dependencies=[Depends(require_role(Role.VIEWER))])
+async def storage_stats(request: Request) -> Dict[str, Any]:
     """Get storage usage statistics."""
     store_path = settings.local_store_path
 
@@ -160,7 +146,7 @@ async def storage_stats() -> Dict[str, Any]:
                         pass
         return total
 
-    return {
+    return build_envelope(request, {
         "local_store_path": store_path,
         "total_bytes": dir_size(store_path),
         "subdirectories": {
@@ -169,4 +155,4 @@ async def storage_stats() -> Dict[str, Any]:
             "reports": dir_size(os.path.join(store_path, "reports")),
             "cache_db": os.path.getsize(settings.sqlite_db_path) if os.path.exists(settings.sqlite_db_path) else 0,
         },
-    }
+    })

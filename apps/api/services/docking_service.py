@@ -6,8 +6,7 @@ import asyncio
 import json
 import os
 import shutil
-import subprocess
-import tempfile
+import signal
 import time
 import uuid
 from typing import Any, Dict, List, Optional
@@ -17,6 +16,12 @@ import structlog
 from config import settings
 
 log = structlog.get_logger()
+
+# Path to the platform-managed tools directory
+_TOOLS_BIN_DIR = os.path.join("apps", "api", "tools", "bin")
+
+# Docking timeout in seconds
+_DOCKING_TIMEOUT = 600
 
 
 class DockingService:
@@ -29,15 +34,53 @@ class DockingService:
         os.makedirs(self._runs_dir, exist_ok=True)
 
     def _find_executable(self, engine: str) -> Optional[str]:
-        """Find docking engine binary."""
+        """Find docking engine binary.
+
+        Checks system PATH first, then the platform-managed tools/bin/ directory.
+        """
         paths = {
             "vina": ["vina", "autodock_vina", "/usr/local/bin/vina"],
             "smina": ["smina", "/usr/local/bin/smina"],
             "gnina": ["gnina", "/usr/local/bin/gnina"],
         }
+        # Check system PATH
         for p in paths.get(engine, []):
             if shutil.which(p):
                 return p
+
+        # Check platform-managed tools/bin/ directory
+        system = os.name  # 'nt' for Windows, 'posix' for Unix
+        local_name = f"{engine}.exe" if system == "nt" else engine
+        local_path = os.path.join(_TOOLS_BIN_DIR, local_name)
+        if os.path.isfile(local_path) and os.access(local_path, os.X_OK):
+            return local_path
+
+        return None
+
+    @staticmethod
+    def validate_docking_inputs(
+        receptor_path: str,
+        ligand_path: str,
+        center: List[float],
+        box_size: List[float],
+    ) -> Optional[str]:
+        """Validate docking inputs. Returns an error message or None if valid."""
+        if not receptor_path or not receptor_path.strip():
+            return "receptor_path is required"
+        if not ligand_path or not ligand_path.strip():
+            return "ligand_path is required"
+        if not center or len(center) != 3:
+            return "center must be a list of 3 floats [x, y, z]"
+        if not box_size or len(box_size) != 3:
+            return "box_size must be a list of 3 floats [sx, sy, sz]"
+        for i, val in enumerate(center):
+            if not isinstance(val, (int, float)):
+                return f"center[{i}] must be a number"
+        for i, val in enumerate(box_size):
+            if not isinstance(val, (int, float)):
+                return f"box_size[{i}] must be a number"
+            if val <= 0:
+                return f"box_size[{i}] must be positive"
         return None
 
     async def detect_pockets(
@@ -138,8 +181,25 @@ class DockingService:
         num_modes: int = 9,
         energy_range: float = 3.0,
     ) -> Dict[str, Any]:
-        """Run docking calculation and return poses."""
+        """Run docking calculation and return poses.
+
+        Validates inputs before execution. Enforces a 600-second timeout
+        with process termination and partial log return on timeout.
+        """
         run_id = str(uuid.uuid4())[:8]
+
+        # ── Input validation ──
+        validation_error = self.validate_docking_inputs(
+            receptor_path, ligand_path, center, box_size
+        )
+        if validation_error:
+            return {
+                "run_id": run_id,
+                "status": "validation_error",
+                "error": validation_error,
+                "poses": [],
+            }
+
         run_dir = os.path.join(self._runs_dir, run_id)
         os.makedirs(run_dir, exist_ok=True)
 
@@ -148,7 +208,10 @@ class DockingService:
             return {
                 "run_id": run_id,
                 "status": "error",
-                "error": "%s not found on system PATH. Install it or use a different engine." % engine,
+                "error": (
+                    f"{engine} not found on system PATH or in {_TOOLS_BIN_DIR}/. "
+                    "Install it or use POST /api/v1/design/plugins/install."
+                ),
                 "poses": [],
             }
 
@@ -173,11 +236,14 @@ class DockingService:
         ]
 
         t0 = time.monotonic()
+        proc = None
         try:
             proc = await asyncio.create_subprocess_exec(
                 *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=600)
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(), timeout=_DOCKING_TIMEOUT
+            )
             elapsed = time.monotonic() - t0
 
             poses = self._parse_vina_output(output_path) if os.path.exists(output_path) else []
@@ -215,7 +281,42 @@ class DockingService:
             }
 
         except asyncio.TimeoutError:
-            return {"run_id": run_id, "status": "timeout", "error": "Docking timed out (600s limit)", "poses": []}
+            # Terminate the process on timeout
+            elapsed = time.monotonic() - t0
+            if proc is not None:
+                try:
+                    proc.terminate()
+                    # Give it a moment to clean up, then kill if needed
+                    try:
+                        await asyncio.wait_for(proc.wait(), timeout=5)
+                    except asyncio.TimeoutError:
+                        proc.kill()
+                except ProcessLookupError:
+                    pass  # Process already exited
+
+            # Return partial log if available
+            partial_log = ""
+            if os.path.exists(log_path):
+                try:
+                    with open(log_path) as f:
+                        partial_log = f.read()
+                except Exception:
+                    pass
+
+            log.warning(
+                "docking_timeout",
+                run_id=run_id,
+                elapsed=round(elapsed, 2),
+                timeout=_DOCKING_TIMEOUT,
+            )
+            return {
+                "run_id": run_id,
+                "status": "timeout",
+                "error": f"Docking timed out ({_DOCKING_TIMEOUT}s limit)",
+                "elapsed_seconds": round(elapsed, 2),
+                "log": partial_log[:2000] if partial_log else "",
+                "poses": [],
+            }
         except Exception as e:
             return {"run_id": run_id, "status": "error", "error": str(e), "poses": []}
 

@@ -34,3 +34,32 @@ async def init_db():
     """Initialize DB tables (syncs metadata to the database)."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+# ── pgcrypto helpers (§61.1) ─────────────────────────────
+
+_PG_ENCRYPT_KEY = os.getenv("PG_ENCRYPT_KEY", "")
+
+
+async def pg_encrypt(session: AsyncSession, plaintext: str):
+    """Encrypt a value using pgp_sym_encrypt. Returns bytes or None if unavailable."""
+    if "sqlite" in _url or not _PG_ENCRYPT_KEY:
+        return None
+    from sqlalchemy import text
+    result = await session.execute(
+        text("SELECT pgp_sym_encrypt(:val, :key)"),
+        {"val": plaintext, "key": _PG_ENCRYPT_KEY},
+    )
+    return result.scalar()
+
+
+async def pg_decrypt(session: AsyncSession, encrypted: bytes):
+    """Decrypt a value using pgp_sym_decrypt. Returns str or None if unavailable."""
+    if "sqlite" in _url or not _PG_ENCRYPT_KEY or encrypted is None:
+        return None
+    from sqlalchemy import text
+    result = await session.execute(
+        text("SELECT pgp_sym_decrypt(:val, :key)"),
+        {"val": encrypted, "key": _PG_ENCRYPT_KEY},
+    )
+    return result.scalar()

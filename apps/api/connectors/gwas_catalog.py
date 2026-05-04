@@ -8,7 +8,45 @@ class GWASCatalogConnector(BaseConnector):
     base_url = "https://www.ebi.ac.uk/gwas/rest/api"
 
     async def search(self, query: str, limit: int = 20) -> List[Dict[str, Any]]:
-        # Naive lookup for a variant by rsID
+        # Try trait-based search first (works for diseases, phenotypes)
+        trait_url = f"{self.base_url}/studies/search/findByDiseaseTrait"
+        data, meta = await self._cached_get(trait_url, params={"diseaseTrait": query})
+        # If no results for the exact query, try as a broader search
+        if data and isinstance(data, dict):
+            studies_check = data.get("_embedded", {}).get("studies", [])
+            if not studies_check:
+                # Try searching with the query as part of a broader term
+                data2, _ = await self._cached_get(
+                    f"{self.base_url}/studies/search/findByDiseaseTrait",
+                    params={"diseaseTrait": f"{query} cancer"}
+                )
+                if data2 and isinstance(data2, dict) and data2.get("_embedded", {}).get("studies"):
+                    data = data2
+        studies = []
+        if data and isinstance(data, dict):
+            studies = data.get("_embedded", {}).get("studies", [])
+        if studies:
+            results = []
+            for study in studies[:limit]:
+                study_id = study.get("accessionId", "")
+                trait = study.get("diseaseTrait", {}).get("trait", "") if isinstance(study.get("diseaseTrait"), dict) else ""
+                results.append({
+                    "id": study_id,
+                    "entity_type": "variant",
+                    "canonical_name": trait or study.get("initialSampleSize", study_id),
+                    "study_id": study_id,
+                    "trait": trait,
+                    "initial_sample_size": study.get("initialSampleSize", ""),
+                    "source_db": "GWASCatalog",
+                    "url": f"https://www.ebi.ac.uk/gwas/studies/{study_id}",
+                    "provenance": [self._prov(
+                        url=f"https://www.ebi.ac.uk/gwas/studies/{study_id}",
+                        ext_id=study_id, confidence=0.9, reasoning="GWAS Catalog trait search"
+                    ).to_dict()],
+                })
+            return results
+
+        # Fallback: rsID lookup for specific variants
         url = f"{self.base_url}/singleNucleotidePolymorphisms/{query}"
         data, meta = await self._cached_get(url)
         results = []

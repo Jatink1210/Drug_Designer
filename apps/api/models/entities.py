@@ -153,6 +153,23 @@ class ClinicalTrialEntity(EntityBase):
     primary_outcome: str = ""
     url: str = ""
 
+
+# ─── Design Candidate (§1 core entity) ───────────────────
+class DesignCandidate(EntityBase):
+    """A molecule design candidate tracked through the Design Studio workflow."""
+
+    entity_type: str = "design_candidate"
+    smiles: str = ""
+    target_id: Optional[str] = None
+    docking_score: Optional[float] = None
+    admet_flags: Dict[str, Any] = Field(default_factory=dict)
+    physicochemical: Dict[str, float] = Field(default_factory=dict, description="MW, logP, TPSA, etc.")
+    novelty_score: Optional[float] = None
+    rationale: str = ""
+    linked_dossier_id: Optional[str] = None
+    linked_report_id: Optional[str] = None
+    iteration: int = 0
+
 class PatentEntity(EntityBase):
     entity_type: str = "patent"
     patent_id: str = ""

@@ -1,0 +1,415 @@
+{
+  "dashboard": {
+    "title": "Drug Designer - Model Inference Monitoring",
+    "tags": ["drug-designer", "ml", "models", "inference", "production"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Model Inference Rate",
+        "type": "graph",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 0},
+        "description": "Inferences per second by model",
+        "targets": [
+          {
+            "expr": "sum(rate(model_inference_total[5m])) by (model_name)",
+            "legendFormat": "{{model_name}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Inferences/sec"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        }
+      },
+      {
+        "id": 2,
+        "title": "Model Inference Latency (p95)",
+        "type": "graph",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 10},
+        "description": "95th percentile inference latency by model",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket[5m])) by (model_name, le))",
+            "legendFormat": "{{model_name}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency (p95)", "logBase": 10},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        }
+      },
+      {
+        "id": 3,
+        "title": "ESM-2 Protein Language Model",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "description": "ESM-2 inference performance (target: <10s for 100 proteins)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket{model_name=\"esm2\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(model_inference_total{model_name=\"esm2\"}[5m])",
+            "legendFormat": "Inference Rate",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "ops", "label": "Rate"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 4,
+        "title": "MolFormer Molecule Transformer",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+        "description": "MolFormer inference performance (target: <5s for 100 molecules)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket{model_name=\"molformer\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(model_inference_total{model_name=\"molformer\"}[5m])",
+            "legendFormat": "Inference Rate",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "ops", "label": "Rate"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 5,
+        "title": "Pathogenicity Prediction Model",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+        "description": "Pathogenicity prediction performance (target: <1min for 1000 variants)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket{model_name=\"pathogenicity_prediction\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(model_inference_total{model_name=\"pathogenicity_prediction\"}[5m])",
+            "legendFormat": "Inference Rate",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "ops", "label": "Rate"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 6,
+        "title": "Tissue Analysis Computer Vision Model",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28},
+        "description": "Tissue analysis performance (target: <2min per WSI)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket{model_name=\"tissue_analysis\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(model_inference_total{model_name=\"tissue_analysis\"}[5m])",
+            "legendFormat": "Inference Rate",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "ops", "label": "Rate"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 7,
+        "title": "Biomarker Quantification Neural Network",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 36},
+        "description": "Biomarker quantification performance (target: <30s per sample)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket{model_name=\"biomarker_quantification\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(model_inference_total{model_name=\"biomarker_quantification\"}[5m])",
+            "legendFormat": "Inference Rate",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "ops", "label": "Rate"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 8,
+        "title": "GAT Target Ranking Model",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 36},
+        "description": "GAT target ranking performance (target: <30s for 1000 targets)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket{model_name=\"gat_target_ranking\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(model_inference_total{model_name=\"gat_target_ranking\"}[5m])",
+            "legendFormat": "Inference Rate",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "ops", "label": "Rate"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 9,
+        "title": "Model Memory Usage",
+        "type": "graph",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 44},
+        "description": "Memory usage by model",
+        "targets": [
+          {
+            "expr": "model_memory_usage_bytes",
+            "legendFormat": "{{model_name}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Memory"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        }
+      },
+      {
+        "id": 10,
+        "title": "Model Batch Size Distribution",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 54},
+        "description": "Average batch size by model",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.5, sum(rate(model_batch_size_bucket[5m])) by (model_name, le))",
+            "legendFormat": "{{model_name}} (median)",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Batch Size"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 11,
+        "title": "Model Errors",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 54},
+        "description": "Model inference errors by type",
+        "targets": [
+          {
+            "expr": "sum(rate(model_errors_total[5m])) by (model_name, error_type)",
+            "legendFormat": "{{model_name}} - {{error_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Errors/sec"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        }
+      },
+      {
+        "id": 12,
+        "title": "Model Performance Summary",
+        "type": "table",
+        "gridPos": {"h": 12, "w": 24, "x": 0, "y": 62},
+        "description": "Summary of all model performance metrics",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket[5m])) by (model_name, le))",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(model_inference_total[5m])) by (model_name)",
+            "format": "table",
+            "instant": true,
+            "refId": "B"
+          },
+          {
+            "expr": "model_memory_usage_bytes",
+            "format": "table",
+            "instant": true,
+            "refId": "C"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "merge"
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true
+              },
+              "indexByName": {
+                "model_name": 0,
+                "Value #A": 1,
+                "Value #B": 2,
+                "Value #C": 3
+              },
+              "renameByName": {
+                "model_name": "Model",
+                "Value #A": "Latency (p95)",
+                "Value #B": "Inference Rate",
+                "Value #C": "Memory Usage"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [
+            {
+              "displayName": "Latency (p95)",
+              "desc": true
+            }
+          ]
+        },
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "Latency (p95)"},
+              "properties": [
+                {"id": "unit", "value": "s"},
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {"value": 0, "color": "green"},
+                      {"value": 10, "color": "yellow"},
+                      {"value": 60, "color": "red"}
+                    ]
+                  }
+                },
+                {"id": "custom.displayMode", "value": "color-background"}
+              ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Inference Rate"},
+              "properties": [
+                {"id": "unit", "value": "ops"}
+              ]
+            },
+            {
+              "matcher": {"id": "byName", "options": "Memory Usage"},
+              "properties": [
+                {"id": "unit", "value": "bytes"}
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

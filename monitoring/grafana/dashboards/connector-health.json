@@ -1,0 +1,482 @@
+{
+  "dashboard": {
+    "title": "Drug Designer - Connector Health Monitoring",
+    "tags": ["drug-designer", "connectors", "health", "production"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "1m",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Connector Uptime (Last 24h)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "description": "Percentage of connectors operational (target: >90%)",
+        "targets": [
+          {
+            "expr": "(count(rate(connector_requests_total{status=\"success\"}[24h]) > 0) / count(rate(connector_requests_total[24h]) > 0)) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 85, "color": "yellow"},
+                {"value": 90, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Total Connector Requests (24h)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(increase(connector_requests_total[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Connector Error Rate (5m)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(rate(connector_requests_total{status!=\"success\"}[5m])) / sum(rate(connector_requests_total[5m])) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 5, "color": "yellow"},
+                {"value": 10, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Circuit Breakers Open",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+        "description": "Number of connectors with open circuit breakers",
+        "targets": [
+          {
+            "expr": "count(connector_circuit_breaker_state == 1)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "textMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Connector Request Rate by Family",
+        "type": "graph",
+        "gridPos": {"h": 10, "w": 12, "x": 0, "y": 4},
+        "description": "Request rate grouped by connector family",
+        "targets": [
+          {
+            "expr": "sum(rate(connector_requests_total[5m])) by (connector)",
+            "legendFormat": "{{connector}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true,
+          "rightSide": false
+        }
+      },
+      {
+        "id": 6,
+        "title": "Connector Latency (p95) by Family",
+        "type": "graph",
+        "gridPos": {"h": 10, "w": 12, "x": 12, "y": 4},
+        "description": "95th percentile latency for each connector family",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(connector_request_duration_seconds_bucket[5m])) by (connector, le))",
+            "legendFormat": "{{connector}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency (p95)"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        },
+        "alert": {
+          "name": "Slow Connector",
+          "conditions": [
+            {
+              "evaluator": {"params": [10], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "message": "Connector latency p95 exceeds 10s threshold (circuit breaker activation)",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 7,
+        "title": "Literature Connectors SLA Compliance",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 14},
+        "description": "Percentage meeting <3s SLA target",
+        "targets": [
+          {
+            "expr": "(sum(rate(connector_request_duration_seconds_bucket{connector=~\"pubmed|europe_pmc|biorxiv|semantic_scholar|openalex|crossref|medrxiv|arxiv_qbio|ssrn|google_scholar\",le=\"3\"}[5m])) / sum(rate(connector_request_duration_seconds_count{connector=~\"pubmed|europe_pmc|biorxiv|semantic_scholar|openalex|crossref|medrxiv|arxiv_qbio|ssrn|google_scholar\"}[5m]))) * 100",
+            "legendFormat": "Literature (<3s)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Disease/Ontology Connectors SLA Compliance",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 14},
+        "description": "Percentage meeting <2s SLA target",
+        "targets": [
+          {
+            "expr": "(sum(rate(connector_request_duration_seconds_bucket{connector=~\"disease_ontology|hpo|orphanet|omim|medgen|monarch|clingen|gtr|gard\",le=\"2\"}[5m])) / sum(rate(connector_request_duration_seconds_count{connector=~\"disease_ontology|hpo|orphanet|omim|medgen|monarch|clingen|gtr|gard\"}[5m]))) * 100",
+            "legendFormat": "Disease/Ontology (<2s)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "Target/Protein Connectors SLA Compliance",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 14},
+        "description": "Percentage meeting <2s SLA target",
+        "targets": [
+          {
+            "expr": "(sum(rate(connector_request_duration_seconds_bucket{connector=~\"uniprot|ensembl|alphafold|rcsb|interpro|pharos|proteomicsdb|human_protein_atlas|peptide_atlas|pride|phosphosite_plus|dbptm|bindingdb|chembl_targets\",le=\"2\"}[5m])) / sum(rate(connector_request_duration_seconds_count{connector=~\"uniprot|ensembl|alphafold|rcsb|interpro|pharos|proteomicsdb|human_protein_atlas|peptide_atlas|pride|phosphosite_plus|dbptm|bindingdb|chembl_targets\"}[5m]))) * 100",
+            "legendFormat": "Target/Protein (<2s)",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "Connector Cache Hit Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22},
+        "description": "Cache hit rate by connector",
+        "targets": [
+          {
+            "expr": "sum(rate(connector_cache_hits_total[5m])) by (connector) / (sum(rate(connector_cache_hits_total[5m])) by (connector) + sum(rate(connector_cache_misses_total[5m])) by (connector)) * 100",
+            "legendFormat": "{{connector}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percent", "label": "Cache Hit Rate %", "max": 100},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 11,
+        "title": "Connector Errors by Type",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22},
+        "description": "Error breakdown by error type",
+        "targets": [
+          {
+            "expr": "sum(rate(connector_errors_total[5m])) by (error_type)",
+            "legendFormat": "{{error_type}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "label": "Errors/sec"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        }
+      },
+      {
+        "id": 12,
+        "title": "Circuit Breaker Status",
+        "type": "table",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 30},
+        "description": "Current circuit breaker state for all connectors",
+        "targets": [
+          {
+            "expr": "connector_circuit_breaker_state",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true,
+                "instance": true,
+                "job": true
+              },
+              "indexByName": {
+                "connector": 0,
+                "Value": 1
+              },
+              "renameByName": {
+                "connector": "Connector",
+                "Value": "State"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [
+            {
+              "displayName": "State",
+              "desc": true
+            }
+          ]
+        },
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "State"},
+              "properties": [
+                {
+                  "id": "mappings",
+                  "value": [
+                    {"type": "value", "value": "0", "text": "Closed", "color": "green"},
+                    {"type": "value", "value": "1", "text": "Open", "color": "red"},
+                    {"type": "value", "value": "2", "text": "Half-Open", "color": "yellow"}
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 13,
+        "title": "Top 10 Slowest Connectors (p95)",
+        "type": "table",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 40},
+        "description": "Connectors with highest p95 latency",
+        "targets": [
+          {
+            "expr": "topk(10, histogram_quantile(0.95, sum(rate(connector_request_duration_seconds_bucket[5m])) by (connector, le)))",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true
+              },
+              "indexByName": {
+                "connector": 0,
+                "Value": 1
+              },
+              "renameByName": {
+                "connector": "Connector",
+                "Value": "Latency (p95)"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [
+            {
+              "displayName": "Latency (p95)",
+              "desc": true
+            }
+          ]
+        },
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {"id": "byName", "options": "Latency (p95)"},
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "s"
+                },
+                {
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {"value": 0, "color": "green"},
+                      {"value": 3, "color": "yellow"},
+                      {"value": 10, "color": "red"}
+                    ]
+                  }
+                },
+                {
+                  "id": "custom.displayMode",
+                  "value": "color-background"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

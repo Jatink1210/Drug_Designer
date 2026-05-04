@@ -7,7 +7,7 @@ import re
 import logging
 from typing import List, Tuple
 
-# Patterns that match common secret formats
+# Patterns that match common secret formats + PII (§67.3)
 SECRET_PATTERNS: List[Tuple[re.Pattern, str]] = [
     (re.compile(r'(bearer\s+)([a-zA-Z0-9._\-]{10,})', re.IGNORECASE), r'\1[REDACTED]'),
     (re.compile(r'(api[_-]?key["\s:=]+)(["\']?)([a-zA-Z0-9_\-]{10,})', re.IGNORECASE), r'\1\2[REDACTED]'),
@@ -17,11 +17,22 @@ SECRET_PATTERNS: List[Tuple[re.Pattern, str]] = [
     (re.compile(r'(Authorization:\s*)(.{10,})', re.IGNORECASE), r'\1[REDACTED]'),
 ]
 
+# §67.3: PII redaction — email addresses redacted as u***@domain.com
+_EMAIL_PATTERN = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
+
+
+def _redact_email(match: re.Match) -> str:
+    email = match.group(0)
+    local, domain = email.split("@", 1)
+    return f"{local[0]}***@{domain}"
+
 
 def redact_secrets(text: str) -> str:
-    """Remove all secret patterns from a log line."""
+    """Remove all secret patterns and PII from a log line (§67.3)."""
     for pattern, replacement in SECRET_PATTERNS:
         text = pattern.sub(replacement, text)
+    # §67.3: Redact email addresses as u***@domain.com
+    text = _EMAIL_PATTERN.sub(_redact_email, text)
     return text
 
 

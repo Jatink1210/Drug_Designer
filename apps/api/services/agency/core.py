@@ -13,9 +13,11 @@ import structlog
 import uuid
 import json
 
+from services.runtime.policy import ollama_enabled
+
 logger = structlog.get_logger()
 
-OLLAMA_ENDPOINT = "http://localhost:11434/api/generate"
+OLLAMA_ENDPOINT = "http://localhost:11434/api/chat"
 DEFAULT_MODEL = "llama3"
 
 # ─── Tool Registry (OpenAI Functions Schema) ─────────────────
@@ -66,12 +68,15 @@ class BaseAgent:
         """Genuine Local LLM REST asynchronous connector."""
         log_ctx = logger.bind(agent=self.name, length=len(prompt))
         log_ctx.debug("llm_dispatch_starting")
+
+        if not ollama_enabled():
+            return "[LLM_DISABLED_BY_POLICY] Local Ollama runtime is disabled for this deployment profile."
         
         payload = {
             "model": DEFAULT_MODEL,
-            "prompt": prompt,
+            "messages": [{"role": "user", "content": prompt}],
             "stream": False,
-            "temperature": 0.2
+            "options": {"temperature": 0.2}
         }
         
         try:
@@ -79,7 +84,7 @@ class BaseAgent:
                 resp = await client.post(OLLAMA_ENDPOINT, json=payload)
                 resp.raise_for_status()
                 data = resp.json()
-                return data.get("response", "").strip()
+                return data.get("message", {}).get("content", "").strip()
         except httpx.ConnectError:
             log_ctx.warning("llm_connection_failed", url=OLLAMA_ENDPOINT)
             return f"[GENUINE_AI_FALLBACK] Connection to {OLLAMA_ENDPOINT} failed. Ensure Local Ollama daemon is active."
@@ -88,7 +93,10 @@ class BaseAgent:
             return f"[GENUINE_AI_ERROR] LLM generation failed: {str(e)}"
 
     async def execute(self, payload: Any) -> Dict[str, Any]:
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must override execute(). "
+            "Subclasses: ResearcherAgent, CriticAgent."
+        )
 
 # ─── Researcher Agent ────────────────────────────────────────
 class ResearcherAgent(BaseAgent):
@@ -118,9 +126,11 @@ class CriticAgent(BaseAgent):
         
         response = await self._query_llm(prompt)
         
+        if "[GENUINE_AI_FALLBACK]" in response or "[GENUINE_AI_ERROR]" in response:
+            return {"critique": response, "approved": False, "verdict": "inconclusive",
+                    "reason": "LLM unavailable — manual review required"}
+
         approved = ("APPROVED" in response.upper() and "REJECTED" not in response.upper())
-        if "[GENUINE_AI_FALLBACK]" in response:
-            approved = True
             
         return {"critique": response, "approved": approved}
 

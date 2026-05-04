@@ -1,0 +1,489 @@
+/**
+ * SF Pro Typography System
+ * 
+ * Apple Design System Typography Implementation
+ * 
+ * Features:
+ * - SF Pro Display for 20px+ (headlines)
+ * - SF Pro Text for 19px and below (body)
+ * - Negative letter-spacing at all sizes
+ * - Tight line-heights for headlines (1.07-1.14)
+ * - Weight restraint: 300, 400, 600, 700 only
+ * - Responsive typography scaling
+ * - Dark mode adjustments
+ * - Accessibility compliance (WCAG AA)
+ * 
+ * Font Files:
+ * SF Pro fonts should be placed in /public/fonts/ directory.
+ * Download from: https://developer.apple.com/fonts/
+ * Required files:
+ * - SF-Pro-Display-Light.woff2
+ * - SF-Pro-Display-Regular.woff2
+ * - SF-Pro-Display-Semibold.woff2
+ * - SF-Pro-Display-Bold.woff2
+ * - SF-Pro-Text-Light.woff2
+ * - SF-Pro-Text-Regular.woff2
+ * - SF-Pro-Text-Semibold.woff2
+ * - SF-Pro-Text-Bold.woff2
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   SF Pro Font Faces
+   ═══════════════════════════════════════════════════════════════ */
+
+/* SF Pro Display - For 20px and above (headlines) */
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* SF Pro Text - For 19px and below (body, UI text) */
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Typography Scale - Apple Style
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Font Families with Fallback Stack */
+  --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-text: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  
+  /* Hero Headlines (80px) - Desktop */
+  --font-size-hero: 80px;
+  --line-height-hero: 1.05;
+  --letter-spacing-hero: -0.015em;
+  
+  /* Large Headlines (64px) - Desktop */
+  --font-size-headline-xl: 64px;
+  --line-height-headline-xl: 1.07;
+  --letter-spacing-headline-xl: -0.012em;
+  
+  /* Medium Headlines (48px) - Desktop */
+  --font-size-headline-lg: 48px;
+  --line-height-headline-lg: 1.08;
+  --letter-spacing-headline-lg: -0.010em;
+  
+  /* Small Headlines (32px) - Desktop */
+  --font-size-headline-md: 32px;
+  --line-height-headline-md: 1.12;
+  --letter-spacing-headline-md: -0.008em;
+  
+  /* Subheadlines (24px) - Desktop */
+  --font-size-subheadline: 24px;
+  --line-height-subheadline: 1.14;
+  --letter-spacing-subheadline: -0.006em;
+  
+  /* Body Large (19px) - SF Pro Text */
+  --font-size-body-lg: 19px;
+  --line-height-body-lg: 1.47;
+  --letter-spacing-body-lg: -0.004em;
+  
+  /* Body Regular (17px) - SF Pro Text */
+  --font-size-body: 17px;
+  --line-height-body: 1.47;
+  --letter-spacing-body: -0.004em;
+  
+  /* Body Small (15px) - SF Pro Text */
+  --font-size-body-sm: 15px;
+  --line-height-body-sm: 1.47;
+  --letter-spacing-body-sm: -0.003em;
+  
+  /* Caption (13px) - SF Pro Text */
+  --font-size-caption: 13px;
+  --line-height-caption: 1.38;
+  --letter-spacing-caption: -0.002em;
+  
+  /* Micro (11px) - SF Pro Text */
+  --font-size-micro: 11px;
+  --line-height-micro: 1.36;
+  --letter-spacing-micro: -0.001em;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Typography - Mobile & Tablet Scaling
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Tablet (769px - 1024px) - Scale down by ~20% */
+@media (max-width: 1024px) and (min-width: 769px) {
+  :root {
+    --font-size-hero: 64px;
+    --font-size-headline-xl: 52px;
+    --font-size-headline-lg: 40px;
+    --font-size-headline-md: 28px;
+    --font-size-subheadline: 21px;
+    --font-size-body-lg: 18px;
+    --font-size-body: 16px;
+    --font-size-body-sm: 14px;
+    --font-size-caption: 12px;
+    --font-size-micro: 10px;
+  }
+}
+
+/* Mobile (768px and below) - Scale down by ~40% */
+@media (max-width: 768px) {
+  :root {
+    --font-size-hero: 48px;
+    --font-size-headline-xl: 40px;
+    --font-size-headline-lg: 32px;
+    --font-size-headline-md: 24px;
+    --font-size-subheadline: 19px;
+    --font-size-body-lg: 17px;
+    --font-size-body: 15px;
+    --font-size-body-sm: 13px;
+    --font-size-caption: 11px;
+    --font-size-micro: 10px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Dark Mode Typography Adjustments
+   ═══════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] {
+  /* Slightly increase letter-spacing for dark backgrounds (improves readability) */
+  --letter-spacing-hero: -0.012em;
+  --letter-spacing-headline-xl: -0.010em;
+  --letter-spacing-headline-lg: -0.008em;
+  --letter-spacing-headline-md: -0.006em;
+  --letter-spacing-subheadline: -0.004em;
+  --letter-spacing-body-lg: -0.002em;
+  --letter-spacing-body: -0.002em;
+  --letter-spacing-body-sm: -0.001em;
+  --letter-spacing-caption: 0em;
+  --letter-spacing-micro: 0em;
+}
+
+/* Dark mode font rendering optimization */
+[data-theme="dark"] body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Typography Classes
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Hero (80px) - SF Pro Display, Bold */
+.text-hero {
+  font-family: var(--font-display);
+  font-size: var(--font-size-hero);
+  line-height: var(--line-height-hero);
+  letter-spacing: var(--letter-spacing-hero);
+  font-weight: 700;
+}
+
+/* Headline XL (64px) - SF Pro Display, Semibold */
+.text-headline-xl {
+  font-family: var(--font-display);
+  font-size: var(--font-size-headline-xl);
+  line-height: var(--line-height-headline-xl);
+  letter-spacing: var(--letter-spacing-headline-xl);
+  font-weight: 600;
+}
+
+/* Headline Large (48px) - SF Pro Display, Semibold */
+.text-headline-lg {
+  font-family: var(--font-display);
+  font-size: var(--font-size-headline-lg);
+  line-height: var(--line-height-headline-lg);
+  letter-spacing: var(--letter-spacing-headline-lg);
+  font-weight: 600;
+}
+
+/* Headline Medium (32px) - SF Pro Display, Semibold */
+.text-headline-md {
+  font-family: var(--font-display);
+  font-size: var(--font-size-headline-md);
+  line-height: var(--line-height-headline-md);
+  letter-spacing: var(--letter-spacing-headline-md);
+  font-weight: 600;
+}
+
+/* Subheadline (24px) - SF Pro Display, Semibold */
+.text-subheadline {
+  font-family: var(--font-display);
+  font-size: var(--font-size-subheadline);
+  line-height: var(--line-height-subheadline);
+  letter-spacing: var(--letter-spacing-subheadline);
+  font-weight: 600;
+}
+
+/* Body Large (19px) - SF Pro Text, Regular */
+.text-body-lg {
+  font-family: var(--font-text);
+  font-size: var(--font-size-body-lg);
+  line-height: var(--line-height-body-lg);
+  letter-spacing: var(--letter-spacing-body-lg);
+  font-weight: 400;
+}
+
+/* Body (17px) - SF Pro Text, Regular */
+.text-body {
+  font-family: var(--font-text);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  letter-spacing: var(--letter-spacing-body);
+  font-weight: 400;
+}
+
+/* Body Small (15px) - SF Pro Text, Regular */
+.text-body-sm {
+  font-family: var(--font-text);
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+  letter-spacing: var(--letter-spacing-body-sm);
+  font-weight: 400;
+}
+
+/* Caption (13px) - SF Pro Text, Regular */
+.text-caption {
+  font-family: var(--font-text);
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-caption);
+  letter-spacing: var(--letter-spacing-caption);
+  font-weight: 400;
+}
+
+/* Micro (11px) - SF Pro Text, Regular */
+.text-micro {
+  font-family: var(--font-text);
+  font-size: var(--font-size-micro);
+  line-height: var(--line-height-micro);
+  letter-spacing: var(--letter-spacing-micro);
+  font-weight: 400;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Weight Utilities (Restricted to 300, 400, 600, 700)
+   ═══════════════════════════════════════════════════════════════ */
+
+.font-light {
+  font-weight: 300;
+}
+
+.font-regular {
+  font-weight: 400;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+/* Prevent use of unsupported weights */
+.font-medium,
+.font-black,
+.font-extrabold {
+  font-weight: 600; /* Fallback to semibold */
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Accessibility Improvements
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Focus-visible styles for keyboard navigation */
+.text-hero:focus-visible,
+.text-headline-xl:focus-visible,
+.text-headline-lg:focus-visible,
+.text-headline-md:focus-visible,
+.text-subheadline:focus-visible,
+.text-body-lg:focus-visible,
+.text-body:focus-visible,
+.text-body-sm:focus-visible,
+.text-caption:focus-visible,
+.text-micro:focus-visible {
+  outline: 2px solid #0071e3;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .text-hero,
+  .text-headline-xl,
+  .text-headline-lg,
+  .text-headline-md,
+  .text-subheadline,
+  .text-body-lg,
+  .text-body,
+  .text-body-sm,
+  .text-caption,
+  .text-micro {
+    font-weight: 600; /* Increase weight for better contrast */
+  }
+}
+
+/* Ensure minimum contrast ratios (WCAG AA) */
+.text-on-light {
+  color: #1d1d1f; /* Near black on light backgrounds - 15.8:1 contrast */
+}
+
+.text-on-dark {
+  color: #f5f5f7; /* Light gray on dark backgrounds - 15.3:1 contrast */
+}
+
+.text-secondary-on-light {
+  color: #6e6e73; /* Medium gray on light - 4.6:1 contrast (AA compliant) */
+}
+
+.text-secondary-on-dark {
+  color: #a1a1a6; /* Light gray on dark - 5.2:1 contrast (AA compliant) */
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Optical Sizing Enforcement
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Ensure SF Pro Display is used for 20px+ */
+.text-hero,
+.text-headline-xl,
+.text-headline-lg,
+.text-headline-md,
+.text-subheadline {
+  font-family: var(--font-display);
+}
+
+/* Ensure SF Pro Text is used for 19px and below */
+.text-body-lg,
+.text-body,
+.text-body-sm,
+.text-caption,
+.text-micro {
+  font-family: var(--font-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Usage Examples (Documentation)
+   ═══════════════════════════════════════════════════════════════ */
+
+/*
+ * USAGE EXAMPLES:
+ * 
+ * Hero Section:
+ * <h1 class="text-hero">Disease Intelligence</h1>
+ * 
+ * Page Title:
+ * <h1 class="text-headline-xl">Target Prioritization</h1>
+ * 
+ * Section Heading:
+ * <h2 class="text-headline-lg">Evidence Explorer</h2>
+ * 
+ * Card Title:
+ * <h3 class="text-headline-md">Candidate Genes</h3>
+ * 
+ * Subheading:
+ * <h4 class="text-subheadline">Pathway Analysis</h4>
+ * 
+ * Body Text (Large):
+ * <p class="text-body-lg">This is emphasized body text for important content.</p>
+ * 
+ * Body Text (Regular):
+ * <p class="text-body">This is standard reading text for most content.</p>
+ * 
+ * Body Text (Small):
+ * <p class="text-body-sm">This is smaller body text for secondary content.</p>
+ * 
+ * Caption:
+ * <span class="text-caption">Source: PubMed • 2024</span>
+ * 
+ * Micro:
+ * <span class="text-micro">Last updated: 2 hours ago</span>
+ * 
+ * Weight Modifiers:
+ * <p class="text-body font-light">Light weight text</p>
+ * <p class="text-body font-regular">Regular weight text</p>
+ * <p class="text-body font-semibold">Semibold weight text</p>
+ * <p class="text-body font-bold">Bold weight text</p>
+ * 
+ * RESPONSIVE BEHAVIOR:
+ * - Desktop (1025px+): Full scale (80px hero, 64px headline-xl, etc.)
+ * - Tablet (769px-1024px): ~20% smaller (64px hero, 52px headline-xl, etc.)
+ * - Mobile (768px and below): ~40% smaller (48px hero, 40px headline-xl, etc.)
+ * 
+ * DARK MODE:
+ * - Automatically adjusts letter-spacing for better readability
+ * - Use [data-theme="dark"] on root element to activate
+ * 
+ * ACCESSIBILITY:
+ * - All text meets WCAG AA contrast requirements (4.5:1 for body, 3:1 for large text)
+ * - Focus-visible styles for keyboard navigation
+ * - Reduced-motion support for users with motion sensitivity
+ * - High-contrast mode support for users with low vision
+ * 
+ * FONT FILES:
+ * - Place SF Pro font files in /public/fonts/ directory
+ * - Download from: https://developer.apple.com/fonts/
+ * - Required: Light (300), Regular (400), Semibold (600), Bold (700)
+ * - Both Display and Text variants needed
+ */

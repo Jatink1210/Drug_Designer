@@ -10,6 +10,44 @@ from datetime import datetime, timezone
 
 from config import settings
 
+# §ALG — Evidence Ranking Weights
+EVIDENCE_WEIGHT_RELEVANCE = 0.4
+EVIDENCE_WEIGHT_RECENCY = 0.2
+EVIDENCE_WEIGHT_SOURCE_QUALITY = 0.2
+EVIDENCE_WEIGHT_EVIDENCE_STRENGTH = 0.2
+
+# Source quality tiers (higher = more authoritative)
+_SOURCE_QUALITY: Dict[str, float] = {
+    "pubmed": 0.9, "europe_pmc": 0.85, "clinicaltrials": 0.8,
+    "opentargets": 0.85, "uniprot": 0.9, "chembl": 0.85,
+    "disgenet": 0.75, "gwas_catalog": 0.8, "rcsb": 0.9,
+    "drugbank": 0.85, "reactome": 0.8, "kegg": 0.8,
+    "string_db": 0.75, "intact": 0.75, "pubchem": 0.8,
+}
+
+
+def compute_evidence_score(
+    relevance: float = 0.5,
+    recency: float = 0.5,
+    source_quality: float = 0.5,
+    evidence_strength: float = 0.5,
+) -> float:
+    """Compute composite evidence score per spec formula.
+
+    evidence_score = 0.4×relevance + 0.2×recency + 0.2×source_quality + 0.2×evidence_strength
+    """
+    return (
+        EVIDENCE_WEIGHT_RELEVANCE * relevance
+        + EVIDENCE_WEIGHT_RECENCY * recency
+        + EVIDENCE_WEIGHT_SOURCE_QUALITY * source_quality
+        + EVIDENCE_WEIGHT_EVIDENCE_STRENGTH * evidence_strength
+    )
+
+
+def get_source_quality(source_name: str) -> float:
+    """Return quality tier for a given source (0-1)."""
+    return _SOURCE_QUALITY.get(source_name.lower(), 0.5)
+
 class EvidenceStore:
     """Manages cached entities, evidence edges, and connector caching policies."""
     
@@ -163,10 +201,15 @@ class EvidenceStore:
                 entity_ids.add(e["src_entity"])
                 entity_ids.add(e["dst_entity"])
                 
-            placeholders = ",".join(["?"] * len(entity_ids))
             entities = []
             if entity_ids:
-                entities = conn.execute(f"SELECT * FROM entities WHERE entity_id IN ({placeholders})", list(entity_ids)).fetchall()
+                # Safe: build placeholder string from count only (no user data in SQL text)
+                id_list = list(entity_ids)
+                params = ",".join(["?"] * len(id_list))
+                entities = conn.execute(
+                    "SELECT * FROM entities WHERE entity_id IN (" + params + ")",
+                    id_list,
+                ).fetchall()
                 
             return {
                 "edges": [dict(e) for e in edges],

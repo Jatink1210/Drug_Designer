@@ -5,6 +5,8 @@ the different agent personas in the SynthArena.
 """
 
 from typing import List, Dict, Any
+
+from services.runtime.policy import ollama_enabled
 from .personas import AVAILABLE_PERSONAS
 
 class AgentOrchestrator:
@@ -31,14 +33,16 @@ class AgentOrchestrator:
             
             start = time.time()
             try:
+                if not ollama_enabled():
+                    raise RuntimeError("Local Ollama runtime is disabled by policy.")
                 # Physically execute against local runtime (Section 14)
                 async with httpx.AsyncClient(timeout=60.0) as client:
                     res = await client.post(
-                        "http://localhost:11434/api/generate",
-                        json={"model": "llama3", "prompt": prompt, "stream": False}
+                        "http://localhost:11434/api/chat",
+                        json={"model": "llama3", "messages": [{"role": "user", "content": prompt}], "stream": False}
                     )
                     res.raise_for_status()
-                    simulated_response = res.json().get("response", "").strip()
+                    simulated_response = res.json().get("message", {}).get("content", "").strip()
             except Exception as e:
                 simulated_response = f"[Inference Error]: {str(e)}"
             

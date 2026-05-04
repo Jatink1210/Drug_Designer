@@ -9,16 +9,63 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 from core.cache import get_disk_cache
 
 router = APIRouter(tags=["health"])
 
 
+# ── Structured Error Model ──────────────────────────────────
+
+
+class StructuredError(BaseModel):
+    """Structured error response for service unavailability."""
+
+    error_code: str
+    message: str
+    suggested_remediation: str
+    service: Optional[str] = None
+    retry_after_seconds: Optional[int] = None
+
+
+class ServiceUnavailableError(Exception):
+    """Raised when a backend service is unavailable."""
+
+    def __init__(
+        self,
+        service: str,
+        message: str = "",
+        retry_after: int = 30,
+    ) -> None:
+        self.service = service
+        self.message = message or f"{service} is currently unavailable"
+        self.retry_after = retry_after
+        super().__init__(self.message)
+
+    def to_structured_error(self) -> StructuredError:
+        remediation_map = {
+            "postgresql": "Check database connection settings or retry in 30 seconds",
+            "redis": "Verify Redis is running and connection URL is correct",
+            "qdrant": "Ensure Qdrant vector store is running and accessible",
+            "plugins": "Run plugin installation or check binary paths",
+        }
+        return StructuredError(
+            error_code="SERVICE_UNAVAILABLE",
+            message=self.message,
+            suggested_remediation=remediation_map.get(
+                self.service, f"Check {self.service} configuration or retry later"
+            ),
+            service=self.service,
+            retry_after_seconds=self.retry_after,
+        )
+
+
 @router.get("/api/health")
+@router.get("/api/v1/health")
 async def health() -> Dict[str, Any]:
     """Health check that verifies core subsystem availability.
 
@@ -26,36 +73,83 @@ async def health() -> Dict[str, Any]:
     non-critical subsystems fail, or "error" if critical checks fail.
     Always returns HTTP 200 to distinguish from a dead backend.
 
-    NOTE: This endpoint MUST respond in <500ms.  Heavy checks (torch,
-    psutil, GPU detection) belong in /api/diagnostics, not here.
+    Enhanced: checks PostgreSQL, Redis, Qdrant, and plugin availability.
     """
+    from datetime import datetime, timezone
+
     issues: List[str] = []
+    services: Dict[str, Dict[str, Any]] = {}
     t0 = time.monotonic()
 
     # 1. Check SQLite cache is accessible
     try:
         cache = get_disk_cache()
         cache.stats()
+        services["cache"] = {"status": "ok"}
     except Exception as e:
         issues.append(f"cache: {str(e)[:80]}")
+        services["cache"] = {"status": "unavailable", "error": str(e)[:80]}
 
     # 2. Check that the API directory and key files exist
     api_dir = os.path.dirname(os.path.abspath(__file__))
     if not os.path.isfile(os.path.join(api_dir, "..", "main.py")):
         issues.append("api: main.py not found relative to health router")
 
-    # 3. Lightweight runtime check — just verify the module is importable,
-    #    do NOT call detect_capabilities() which imports torch/psutil and
-    #    can hang for 10+ seconds in bundled environments.
+    # 3. Lightweight runtime check
     try:
         from services.runtime.selector import RuntimeSelector  # noqa: F811
-        # Just verify the class exists and is importable
+        services["runtime"] = {"status": "ok"}
     except Exception as e:
         issues.append(f"runtime: {str(e)[:80]}")
+        services["runtime"] = {"status": "unavailable", "error": str(e)[:80]}
+
+    # 4. PostgreSQL connection check
+    try:
+        from core.db import AsyncSessionLocal
+        from sqlalchemy import text as sa_text
+        async with AsyncSessionLocal() as session:
+            await session.execute(sa_text("SELECT 1"))
+        services["postgresql"] = {"status": "ok"}
+    except Exception as e:
+        issues.append(f"postgresql: {str(e)[:80]}")
+        services["postgresql"] = {"status": "unavailable", "error": str(e)[:80]}
+
+    # 5. Redis ping check
+    redis_result = await _check_redis()
+    if redis_result.get("status") == "PASS":
+        services["redis"] = {"status": "ok"}
+    else:
+        issues.append(f"redis: {redis_result.get('error', 'unavailable')[:80]}")
+        services["redis"] = {"status": "unavailable", "error": redis_result.get("error", "")[:80]}
+
+    # 6. Qdrant availability check
+    qdrant_result = await _check_qdrant()
+    if qdrant_result.get("status") == "PASS":
+        services["qdrant"] = {"status": "ok", "collections": qdrant_result.get("collections", 0)}
+    else:
+        issues.append(f"qdrant: {qdrant_result.get('error', 'unavailable')[:80]}")
+        services["qdrant"] = {"status": "unavailable", "error": qdrant_result.get("error", "")[:80]}
+
+    # 7. Plugin status via ToolInstaller
+    try:
+        from services.tool_installer import ToolInstaller
+        installer = ToolInstaller()
+        plugin_status = installer.check_availability()
+        plugins_info: Dict[str, Any] = {}
+        for tool_name, tool_stat in plugin_status.items():
+            plugins_info[tool_name] = {
+                "status": tool_stat.status if hasattr(tool_stat, "status") else str(tool_stat),
+                "version": getattr(tool_stat, "version", ""),
+                "path": getattr(tool_stat, "path", ""),
+            }
+        services["plugins"] = {"status": "ok", "tools": plugins_info}
+    except Exception as e:
+        services["plugins"] = {"status": "unavailable", "error": str(e)[:80]}
 
     elapsed_ms = round((time.monotonic() - t0) * 1000)
 
     # Determine overall status
+    failed_services = [k for k, v in services.items() if v.get("status") == "unavailable"]
     if not issues:
         status = "ok"
     else:
@@ -63,9 +157,12 @@ async def health() -> Dict[str, Any]:
 
     return {
         "status": status,
-        "service": "drugsynth-workbench-api",
+        "service": "drug-designer-api",
         "version": "1.0.0",
         "check_ms": elapsed_ms,
+        "services": services,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "failed_services": failed_services if failed_services else None,
         "issues": issues if issues else None,
     }
 
@@ -80,6 +177,7 @@ def _detect_runtime_capabilities():
 
 
 @router.get("/api/diagnostics")
+@router.get("/api/v1/diagnostics")
 async def diagnostics() -> Dict[str, Any]:
     """Detailed system diagnostics."""
     cache_stats = get_disk_cache().stats()
@@ -219,3 +317,57 @@ async def _ping_connectors() -> Dict[str, Dict[str, Any]]:
                 pings[name] = {"status": "FAIL", "error": str(e)[:100]}
 
     return pings
+
+
+# ── §5.3 Performance Budget Diagnostics ────────────────────
+@router.get("/api/v1/diagnostics/performance")
+async def performance_diagnostics() -> Dict[str, Any]:
+    """Return p50/p95/p99 request timing stats from in-memory collector."""
+    try:
+        from main import get_recent_timings
+        timings = get_recent_timings()
+    except Exception:
+        timings = []
+
+    if not timings:
+        return {"status": "ok", "sample_count": 0, "p50_ms": None, "p95_ms": None, "p99_ms": None}
+
+    sorted_t = sorted(timings)
+    n = len(sorted_t)
+
+    def _percentile(p: float) -> float:
+        idx = int(p / 100.0 * n)
+        return round(sorted_t[min(idx, n - 1)], 1)
+
+    return {
+        "status": "ok",
+        "sample_count": n,
+        "p50_ms": _percentile(50),
+        "p95_ms": _percentile(95),
+        "p99_ms": _percentile(99),
+        "min_ms": round(sorted_t[0], 1),
+        "max_ms": round(sorted_t[-1], 1),
+        "budget_ms": 400,
+        "over_budget_count": sum(1 for t in sorted_t if t > 400),
+    }
+
+
+# ── §1.5 Event Bus Query Endpoint ──────────────────────────
+@router.get("/api/v1/events/recent")
+async def recent_events(family: str | None = None, limit: int = 50) -> Dict[str, Any]:
+    """Return recent domain events from the in-memory event bus (Deep-Impl §1.5).
+
+    Query params:
+      family — filter by event family (project, retrieval, disease, target, etc.)
+      limit  — max events to return (default 50, max 200)
+    """
+    from core.event_bus import event_bus
+
+    limit = min(limit, 200)
+    events = event_bus.recent_events(family=family, limit=limit)
+    return {
+        "status": "ok",
+        "data": events,
+        "count": len(events),
+        "family_filter": family,
+    }

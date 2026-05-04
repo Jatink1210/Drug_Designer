@@ -1,148 +1,171 @@
-/** LeftRail — 172px always-visible grouped navigation matching the Impeccable mockup.
+/** LeftRail — Light sidebar navigation with grouped links.
  *  5 groups: Discovery · Analysis · Workflows · Output · System
- *  Each item: icon + label + optional badge count.
- *  Active item: 3px left accent border.
+ *  Light bg, accent-blue active, responsive mobile support.
  */
 
 import {
-    Home, Search, Pin, Radio, Activity, Target, Link2,
-    Network, GitBranch, Box, FlaskConical,
-    Microscope, Swords, AlertTriangle, CheckSquare,
-    FileText, ClipboardList, Package,
-    Cpu, Zap, Satellite, Monitor,
-    FolderOpen, Play, ScrollText, Image as ImageIcon, Settings
+  Compass,
+  Search,
+  Activity,
+  Network,
+  GitBranch,
+  Box,
+  FlaskConical,
+  Microscope,
+  Swords,
+  AlertTriangle,
+  CheckSquare,
+  FileText,
+  StickyNote,
+  FolderOpen,
+  ScrollText,
+  Settings,
+  Beaker,
+  Crosshair,
+  Dna,
+  Link2,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/components/AuthProvider";
+import {
+  CANONICAL_MODULE_ROUTES,
+  CANONICAL_NAV_SECTIONS,
+  type CanonicalModuleKey,
+} from "@/lib/canonicalProduct";
 
 interface NavItem {
-    path: string;
-    label: string;
-    icon: React.ReactNode;
-    badge?: string;
+  path: string;
+  label: string;
+  icon: React.ReactNode;
+  badge?: string;
+  badgeKey?: string;
+  adminOnly?: boolean;
 }
 
 interface NavSection {
-    title: string;
-    items: NavItem[];
+  title: string;
+  items: NavItem[];
 }
 
-const SECTIONS: NavSection[] = [
-    {
-        title: "Discovery",
-        items: [
-            { path: "/workspace", label: "Home", icon: <Home size={15} /> },
-            { path: "/search", label: "Evidence Search", icon: <Search size={15} />, badge: "47" },
-            { path: "/evidence", label: "Evidence Workspace", icon: <Pin size={15} />, badge: "12" },
-            { path: "/sources", label: "Source Explorer", icon: <Radio size={15} />, badge: "18" },
-            { path: "/disease", label: "Disease Intel", icon: <Activity size={15} />, badge: "12" },
-            { path: "/targets", label: "Targets", icon: <Target size={15} />, badge: "8" },
-            { path: "/uniprot-mapping", label: "UniProt Mapping", icon: <Link2 size={15} />, badge: "10" },
-        ],
-    },
-    {
-        title: "Analysis",
-        items: [
-            { path: "/kg", label: "Knowledge Graph", icon: <Network size={15} />, badge: "82K" },
-            { path: "/pathways", label: "Pathways", icon: <GitBranch size={15} />, badge: "6" },
-            { path: "/structure", label: "Structures", icon: <Box size={15} />, badge: "5" },
-            { path: "/design", label: "Design Studio", icon: <FlaskConical size={15} />, badge: "3" },
-        ],
-    },
-    {
-        title: "Workflows",
-        items: [
-            { path: "/translational", label: "Clinical Stage", icon: <Microscope size={15} />, badge: "4" },
-            { path: "/syntharena", label: "SynthArena", icon: <Swords size={15} />, badge: "3" },
-            { path: "/contradictions", label: "Contradictions", icon: <AlertTriangle size={15} />, badge: "3" },
-            { path: "/pico", label: "PICO Verify", icon: <CheckSquare size={15} />, badge: "4" },
-        ],
-    },
-    {
-        title: "Output",
-        items: [
-            { path: "/dossiers", label: "Dossiers", icon: <ClipboardList size={15} />, badge: "3" },
-            { path: "/reports", label: "Reports", icon: <FileText size={15} />, badge: "4" },
-            { path: "/export", label: "Export Center", icon: <Package size={15} /> },
-        ],
-    },
-    {
-        title: "System",
-        items: [
-            { path: "/models", label: "Models", icon: <Cpu size={15} />, badge: "5" },
-            { path: "/runtime-center", label: "Runtime", icon: <Zap size={15} /> },
-            { path: "/local-agent", label: "Local Agent", icon: <Satellite size={15} /> },
-            { path: "/hardware-status", label: "Hardware", icon: <Monitor size={15} /> },
-            { path: "/projects", label: "Projects", icon: <FolderOpen size={15} />, badge: "3" },
-            { path: "/runs", label: "Runs", icon: <Play size={15} />, badge: "12" },
-            { path: "/logs", label: "Logs", icon: <ScrollText size={15} /> },
-            { path: "/media", label: "Media", icon: <ImageIcon size={15} />, badge: "4" },
-            { path: "/settings", label: "Settings", icon: <Settings size={15} /> },
-        ],
-    },
-];
+const ICONS_BY_MODULE: Record<CanonicalModuleKey, React.ReactNode> = {
+  cockpit: <Compass size={16} />,
+  "evidence-search": <Search size={16} />,
+  "entity-intelligence": <Activity size={16} />,
+  "knowledge-graph": <Network size={16} />,
+  pathways: <GitBranch size={16} />,
+  structure: <Box size={16} />,
+  design: <FlaskConical size={16} />,
+  "clinical-design": <Microscope size={16} />,
+  syntharena: <Swords size={16} />,
+  "research-labs": <Beaker size={16} />,
+  "contradiction-similarity": <AlertTriangle size={16} />,
+  "pico-verification": <CheckSquare size={16} />,
+  settings: <Settings size={16} />,
+};
 
-export default function LeftRail() {
-    const location = useLocation();
+const BADGE_KEY_BY_MODULE: Partial<Record<CanonicalModuleKey, string>> = {
+  "entity-intelligence": "disease_queries",
+};
 
-    return (
-        <nav
-            className="shrink-0 border-r border-[var(--border)] flex flex-col py-3 overflow-y-auto hide-scrollbar"
-            style={{
-                width: 172,
-                minWidth: 172,
-                background: "var(--bg-app)",
-            }}
-        >
-            {SECTIONS.map((section, si) => (
-                <div key={section.title} className={si > 0 ? "mt-1" : ""}>
-                    {/* Section header */}
-                    <div
-                        className="px-4 py-1.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--text-muted)]"
-                        style={{ letterSpacing: "0.08em" }}
+const SECTIONS: NavSection[] = CANONICAL_NAV_SECTIONS.map((section) => ({
+  title: section.title,
+  items: CANONICAL_MODULE_ROUTES.filter((route) => route.section === section.key).map((route) => ({
+    path: route.path,
+    label: route.label,
+    icon: ICONS_BY_MODULE[route.key],
+    badgeKey: BADGE_KEY_BY_MODULE[route.key],
+  })),
+}));
+
+export default function LeftRail({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
+  const location = useLocation();
+  const { user } = useAuth();
+  const [counts, setCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetch("/api/v1/cockpit/nav-counts", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((env) => { if (env.data) setCounts(env.data); })
+      .catch(() => {});
+  }, []);
+
+  const getBadge = (item: NavItem): string | undefined => {
+    if (item.badgeKey && counts[item.badgeKey]) {
+      return String(counts[item.badgeKey]);
+    }
+    return item.badge;
+  };
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="sidebar-overlay fixed inset-0 z-40"
+          style={{ background: "rgba(0,0,0,0.3)" }}
+          onClick={onClose}
+        />
+      )}
+
+      <nav
+        aria-label="Main navigation"
+        className={`sidebar-desktop shrink-0 flex flex-col py-4 overflow-y-auto hide-scrollbar ${isOpen ? "open" : ""}`}
+        style={{
+          width: 240,
+          minWidth: 240,
+          background: "var(--bg-sidebar)",
+          borderRight: "1px solid var(--border)",
+        }}
+      >
+        {SECTIONS.map((section, si) => (
+          <div key={section.title} className={si > 0 ? "mt-3" : ""}>
+            {/* Section header */}
+            <div
+              className="px-5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.1em]"
+              style={{ color: "var(--text-muted)" }}
+            >
+              {section.title}
+            </div>
+
+            {/* Navigation items */}
+            {section.items.filter((item) => !item.adminOnly || user?.role === "admin").map((item) => {
+              const isActive =
+                location.pathname === item.path ||
+                location.pathname.startsWith(item.path + "/");
+              const badge = getBadge(item);
+
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={`sidebar-link ${isActive ? "active" : ""}`}
+                  onClick={() => onClose?.()}
+                >
+                  <span className="shrink-0 flex items-center justify-center w-[20px]">
+                    {item.icon}
+                  </span>
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {badge && (
+                    <span
+                      className="shrink-0 text-[10px] font-semibold rounded-full px-1.5 py-0.5 max-w-[40px] truncate"
+                      title={badge}
+                      style={{
+                        background: isActive ? "var(--accent-subtle)" : "var(--bg-surface)",
+                        color: isActive ? "var(--accent)" : "var(--text-muted)",
+                        minWidth: 20,
+                        textAlign: "center",
+                      }}
                     >
-                        {section.title}
-                    </div>
-
-                    {/* Navigation items */}
-                    {section.items.map(item => {
-                        const isActive =
-                            location.pathname === item.path ||
-                            location.pathname.startsWith(item.path + "/");
-
-                        return (
-                            <NavLink
-                                key={item.path}
-                                to={item.path}
-                                className="flex items-center gap-2.5 pl-3 pr-2 py-[5px] mx-1 text-[11px] font-medium transition-colors relative group"
-                                style={{
-                                    color: isActive ? "var(--accent)" : "var(--text-secondary)",
-                                    background: isActive ? "var(--accent-subtle)" : "transparent",
-                                    borderLeft: isActive ? "3px solid var(--accent)" : "3px solid transparent",
-                                    borderRadius: "0 4px 4px 0",
-                                }}
-                            >
-                                <span className="shrink-0 flex items-center justify-center w-[18px]">
-                                    {item.icon}
-                                </span>
-                                <span className="flex-1 truncate">{item.label}</span>
-                                {item.badge && (
-                                    <span
-                                        className="shrink-0 text-[9px] font-bold rounded-sm px-1 py-px"
-                                        style={{
-                                            background: isActive ? "var(--accent)" : "var(--border)",
-                                            color: isActive ? "#fff" : "var(--text-muted)",
-                                            minWidth: 18,
-                                            textAlign: "center",
-                                        }}
-                                    >
-                                        {item.badge}
-                                    </span>
-                                )}
-                            </NavLink>
-                        );
-                    })}
-                </div>
-            ))}
-        </nav>
-    );
+                      {badge}
+                    </span>
+                  )}
+                </NavLink>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+    </>
+  );
 }

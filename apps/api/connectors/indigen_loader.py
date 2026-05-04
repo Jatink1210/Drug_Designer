@@ -47,7 +47,9 @@ class IndiGenLoader(BaseConnector):
                                 
                         if match or query.lower() in rsid.lower() or query.lower() in gene.lower():
                             entity = self.normalize(row_lower)
-                            results.append(entity.model_dump())
+                            d = entity.model_dump()
+                            d["indian_population_relevant"] = True
+                            results.append(d)
                             if len(results) >= limit:
                                 return results
             except Exception as e:

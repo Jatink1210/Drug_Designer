@@ -1,4 +1,4 @@
-"""DrugSynth Workbench — Configuration via Pydantic Settings."""
+"""Drug Designer Platform — Configuration via Pydantic Settings."""
 
 from __future__ import annotations
 
@@ -25,10 +25,15 @@ class Settings(BaseSettings):
     api_cors_origins: List[str] = ["http://localhost:5173"]
 
     # LLM
+    llm_runtime_mode: str = "hosted"  # hosted | local | auto
+    llm_remote_base_url: str = "https://api.openai.com/v1"
+    llm_enable_ollama: bool = False
+    airllm_enabled: bool = False
     ollama_host: str = "http://localhost:11434"
-    ollama_model: str = "llama3.1:8b"
+    ollama_model: str = "gemma4:26b"
     openai_api_key: str = ""
     openai_model: str = "gpt-4o-mini"
+    spacy_model_name: str = "en_core_sci_sm"
 
     # Qdrant
     qdrant_host: str = "localhost"
@@ -43,10 +48,11 @@ class Settings(BaseSettings):
     # Postgres (Production Auth/Routing)
     postgres_url: str = "" # e.g. "postgresql+asyncpg://user:pass@localhost/db"
     
-    # Auth Security
-    jwt_secret: str = "changeme-for-production"
+    # Auth Security (§55.1)
+    jwt_secret: str = ""  # REQUIRED — set via JWT_SECRET env var
     jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 1440
+    jwt_expire_minutes: int = 15  # §55.1: Access Token 15 min TTL
+    refresh_token_expire_days: int = 7  # §55.1: Refresh Token 7 day TTL
 
     # File store / S3
     local_store_path: str = get_data_dir()
@@ -58,12 +64,31 @@ class Settings(BaseSettings):
     # Neo4j
     neo4j_uri: str = "bolt://localhost:7687"
     neo4j_user: str = "neo4j"
-    neo4j_password: str = "password"
+    neo4j_password: str = ""  # Set via NEO4J_PASSWORD env var
+
+    # Model weights cache
+    model_cache_dir: str = ""  # Override via MODEL_CACHE_DIR env var; defaults to data/models/
+
+    # Indian population genomics boost (§83.5)
+    india_population_weight: float = 0.15  # Multiplier on variant signal when Indian-population-relevant
+
+    # Encryption (§61.1)
+    encryption_key: str = ""  # 32-byte Fernet key, set via ENCRYPTION_KEY env var
 
     # External APIs
     ncbi_api_key: str = ""
+    disgenet_api_key: str = ""  # Set via DISGENET_API_KEY env var
     opentargets_api_url: str = "https://api.platform.opentargets.org/api/v4/graphql"
     chembl_api_url: str = "https://www.ebi.ac.uk/chembl/api/data"
+
+    # EvolutionaryScale ESM Forge API (ESM-3 Large — De Novo Protein Design §24.2)
+    esm_forge_api_key: str = ""  # Set via ESM_FORGE_API_KEY env var
+    # Model name: esm3-large-2024-08
+    # Endpoint: https://forge.evolutionaryscale.ai
+
+    # Observability (§60.4, §96)
+    sentry_dsn: str = ""  # Set via SENTRY_DSN env var
+    prometheus_enabled: bool = True
 
 
 settings = Settings()

@@ -1,0 +1,13 @@
+# Drug Designer — Grafana Dashboard Provisioning (§60.4)
+apiVersion: 1
+
+providers:
+  - name: Drug Designer
+    orgId: 1
+    folder: Drug Designer
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

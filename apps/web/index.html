@@ -6,14 +6,32 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Drug Designer</title>
+
+  <!-- §O-3: DNS prefetch + preconnect for critical origins -->
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
   <meta name="description"
     content="Drug Designer — Local-first scientific discovery workbench for drug discovery research" />
-    <!-- Impeccable Typography: DM Sans for reading, Syne for stark headers, JetBrains Mono for data/code -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;500;600&family=Syne:wght@500;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- §O-3: Preload the primary Inter woff2 subset to reduce LCP render-blocking.
+       font-display=optional avoids invisible text during font swap. -->
+  <link
+    rel="preload"
+    as="font"
+    type="font/woff2"
+    href="https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2"
+    crossorigin
+  />
+
+  <!-- §O-3: Typography — display=optional skips font swap on slow connections
+       so LCP element renders immediately with system font fallback -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;450;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=optional"
+    rel="stylesheet"
+  />
 </head>
 
 <body>

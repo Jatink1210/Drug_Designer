@@ -1,0 +1,6 @@
+{
+  "runtime_id": "airllm",
+  "model_name": "Gemma-4-26B-A4B",
+  "endpoint": "",
+  "compute_mode": "cpu"
+}

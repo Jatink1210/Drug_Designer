@@ -4,13 +4,15 @@ import os
 import shutil
 import uuid
 from typing import Any, Dict, List
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request
+from routers.auth import get_current_user
 from pydantic import BaseModel
 
 from services.doc_tree import DocTreeService
 from config import settings
+from models.envelope import build_envelope
 
-router = APIRouter(prefix="/api/docs", tags=["docs"])
+router = APIRouter(prefix="/api/v1/docs", tags=["docs"], dependencies=[Depends(get_current_user)])
 
 # Ensure upload directory exists
 UPLOAD_DIR = os.path.join(settings.local_store_path, "uploads")
@@ -23,7 +25,7 @@ class DocSearchRequest(BaseModel):
 
 
 @router.post("/ingest")
-async def ingest_document(file: UploadFile = File(...)) -> Dict[str, Any]:
+async def ingest_document(request: Request, file: UploadFile = File(...)) -> Dict[str, Any]:
     """Uploads a PDF and indexes its chunks using SQLite FTS5."""
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
@@ -36,7 +38,7 @@ async def ingest_document(file: UploadFile = File(...)) -> Dict[str, Any]:
             shutil.copyfileobj(file.file, buffer)
             
         result = DocTreeService.ingest_pdf(file_path, doc_id=doc_id)
-        return {"status": "success", "result": result}
+        return build_envelope(request, {"status": "success", "result": result})
         
     except Exception as e:
         if os.path.exists(file_path):
@@ -45,18 +47,18 @@ async def ingest_document(file: UploadFile = File(...)) -> Dict[str, Any]:
 
 
 @router.post("/search")
-async def search_documents(req: DocSearchRequest) -> Dict[str, Any]:
+async def search_documents(req: DocSearchRequest, request: Request) -> Dict[str, Any]:
     """Search ingested documents returning node paths and page anchors."""
     results = DocTreeService.search_nodes(req.query, limit=req.limit)
-    return {"query": req.query, "count": len(results), "nodes": results}
+    return build_envelope(request, {"query": req.query, "count": len(results), "nodes": results})
 
 
 @router.post("/clear")
-async def clear_documents() -> Dict[str, Any]:
+async def clear_documents(request: Request) -> Dict[str, Any]:
     """Wipes the local FTS5 document index."""
     DocTreeService.clear_index()
     # Cleanup saved PDFs
     if os.path.exists(UPLOAD_DIR):
         shutil.rmtree(UPLOAD_DIR)
         os.makedirs(UPLOAD_DIR, exist_ok=True)
-    return {"status": "success", "message": "Document index and files cleared."}
+    return build_envelope(request, {"status": "success", "message": "Document index and files cleared."})

@@ -5,26 +5,28 @@ import json
 import logging
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from pydantic import BaseModel
 from starlette.responses import StreamingResponse
+from models.envelope import build_envelope
+from routers.auth import get_current_user
 
 from services.job_logger import JobLogger
 from services.rlm_engine import RLMEngine
 
-router = APIRouter(prefix="/api/jobs", tags=["rlm_jobs"])
+router = APIRouter(prefix="/api/v1/jobs", tags=["rlm_jobs"], dependencies=[Depends(get_current_user)])
 log = logging.getLogger(__name__)
 
 
 @router.get("/history")
-async def list_job_history() -> list:
+async def list_job_history(request: Request) -> Dict[str, Any]:
     """List all past job runs (most recent first)."""
     try:
         history = JobLogger.get_all_jobs()
-        return history
+        return build_envelope(request, history)
     except Exception as e:
         log.warning("Could not list job history: %s", e)
-        return []
+        return build_envelope(request, [])
 
 
 class RunJobRequest(BaseModel):
@@ -63,7 +65,7 @@ async def _run_rlm_task(
 
 @router.post("/run")
 async def start_rlm_job(
-    req: RunJobRequest, background_tasks: BackgroundTasks,
+    req: RunJobRequest, request: Request, background_tasks: BackgroundTasks,
 ) -> Dict[str, Any]:
     """Start an RLM async reasoning job."""
     engine = RLMEngine(
@@ -81,41 +83,41 @@ async def start_rlm_job(
     }
     background_tasks.add_task(_run_rlm_task, job_logger, engine, step_queue)
 
-    return {
+    return build_envelope(request, {
         "job_id": job_logger.job_id,
         "status": "started",
         "message": "RLM reasoning loop initialized.",
-    }
+    })
 
 
 @router.get("/{job_id}")
-async def get_job_status(job_id: str) -> Dict[str, Any]:
+async def get_job_status(job_id: str, request: Request) -> Dict[str, Any]:
     """Get the result or current status of an RLM job."""
 
     # 1. Check in-memory result first
     job = _ACTIVE_JOBS.get(job_id, {})
     if job.get("status") == "completed" and "result" in job:
-        return job["result"]
+        return build_envelope(request, job["result"])
 
     # 2. Check the SQLite JobLogger
     trace = JobLogger.get_job_trace(job_id)
     if trace:
-        return {
+        return build_envelope(request, {
             "job_id": job_id,
             "name": trace.get("name"),
             "status": trace.get("status"),
-        }
+        })
 
     raise HTTPException(status_code=404, detail="Job not found")
 
 
 @router.get("/{job_id}/trace")
-async def get_job_trace(job_id: str) -> Dict[str, Any]:
+async def get_job_trace(job_id: str, request: Request) -> Dict[str, Any]:
     """Get the full minute-by-minute execution trace for reproducible science."""
     trace = JobLogger.get_job_trace(job_id)
     if not trace:
         raise HTTPException(status_code=404, detail="Trace not found")
-    return {"trace": trace}
+    return build_envelope(request, {"trace": trace})
 
 
 @router.get("/{job_id}/stream")

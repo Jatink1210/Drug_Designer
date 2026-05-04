@@ -34,7 +34,9 @@ NORM_DIR.mkdir(parents=True, exist_ok=True)
 async def init_qdrant() -> AsyncQdrantClient:
     """Initialize Qdrant client and core collections."""
     client = AsyncQdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
-    collections = ["proteins", "genes", "diseases", "drugs", "variants", "pathways", "publications", "clinical_trials"]
+    # §8.2 Required collections: Protein(512d), Molecule(512d), Pathway(512d), Publication(512d after alignment)
+    # Plus additional entity collections for full-spectrum coverage
+    collections = ["proteins", "molecules", "genes", "diseases", "drugs", "variants", "pathways", "publications", "clinical_trials"]
     
     for coll in collections:
         exists = await client.collection_exists(coll)
@@ -44,6 +46,61 @@ async def init_qdrant() -> AsyncQdrantClient:
                 collection_name=coll,
                 vectors_config=models.VectorParams(size=512, distance=models.Distance.COSINE),
             )
+
+    # §16.4 — Enforce payload field indexes for spec-required collections
+    # Protein Collection
+    _protein_fields = {
+        "protein_id": models.PayloadSchemaType.KEYWORD,
+        "gene_symbol": models.PayloadSchemaType.KEYWORD,
+        "gwas_score": models.PayloadSchemaType.FLOAT,
+        "druggability_score": models.PayloadSchemaType.FLOAT,
+        "ppi_degree": models.PayloadSchemaType.INTEGER,
+        "expression_tissues": models.PayloadSchemaType.KEYWORD,
+    }
+    # Molecule Collection
+    _molecule_fields = {
+        "smiles": models.PayloadSchemaType.KEYWORD,
+        "mol_weight": models.PayloadSchemaType.FLOAT,
+        "logP": models.PayloadSchemaType.FLOAT,
+        "tpsa": models.PayloadSchemaType.FLOAT,
+        "sa_score": models.PayloadSchemaType.FLOAT,
+        "qed": models.PayloadSchemaType.FLOAT,
+    }
+    # Pathway Collection
+    _pathway_fields = {
+        "pathway_id": models.PayloadSchemaType.KEYWORD,
+        "pathway_name": models.PayloadSchemaType.KEYWORD,
+        "category": models.PayloadSchemaType.KEYWORD,
+        "num_genes": models.PayloadSchemaType.INTEGER,
+        "num_compounds": models.PayloadSchemaType.INTEGER,
+        "gwas_enrichment": models.PayloadSchemaType.FLOAT,
+    }
+    # Publication Collection (PICO)
+    _publication_fields = {
+        "pmid": models.PayloadSchemaType.KEYWORD,
+        "pico_population": models.PayloadSchemaType.TEXT,
+        "pico_intervention": models.PayloadSchemaType.TEXT,
+        "pico_outcome": models.PayloadSchemaType.TEXT,
+        "Indian_population": models.PayloadSchemaType.BOOL,
+        "effect_size": models.PayloadSchemaType.FLOAT,
+    }
+    _collection_field_map = {
+        "proteins": _protein_fields,
+        "molecules": _molecule_fields,
+        "pathways": _pathway_fields,
+        "publications": _publication_fields,
+    }
+    for coll_name, fields in _collection_field_map.items():
+        for field_name, schema_type in fields.items():
+            try:
+                await client.create_payload_index(
+                    collection_name=coll_name,
+                    field_name=field_name,
+                    field_schema=schema_type,
+                )
+            except Exception:
+                pass  # Index may already exist
+
     return client
 
 

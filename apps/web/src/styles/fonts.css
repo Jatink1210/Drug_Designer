@@ -1,0 +1,188 @@
+/**
+ * SF Pro Font Declarations
+ * 
+ * Separate file for @font-face declarations to improve organization
+ * and enable font preloading optimization.
+ * 
+ * Font Files Location: /public/fonts/
+ * Download from: https://developer.apple.com/fonts/
+ * 
+ * Required Files:
+ * - SF-Pro-Display-Light.woff2 (300)
+ * - SF-Pro-Display-Regular.woff2 (400)
+ * - SF-Pro-Display-Semibold.woff2 (600)
+ * - SF-Pro-Display-Bold.woff2 (700)
+ * - SF-Pro-Text-Light.woff2 (300)
+ * - SF-Pro-Text-Regular.woff2 (400)
+ * - SF-Pro-Text-Semibold.woff2 (600)
+ * - SF-Pro-Text-Bold.woff2 (700)
+ * 
+ * Usage:
+ * Import this file before typography.css in your main CSS file:
+ * @import './fonts.css';
+ * @import './typography.css';
+ * 
+ * Or add to HTML head for preloading:
+ * <link rel="preload" href="/fonts/SF-Pro-Display-Semibold.woff2" as="font" type="font/woff2" crossorigin>
+ * <link rel="preload" href="/fonts/SF-Pro-Text-Regular.woff2" as="font" type="font/woff2" crossorigin>
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   SF Pro Display - For 20px and above (headlines, large text)
+   ═══════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: url('/fonts/SF-Pro-Display-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SF Pro Text - For 19px and below (body, UI text)
+   ═══════════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'SF Pro Text';
+  src: url('/fonts/SF-Pro-Text-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Fallback Font Stack
+   ═══════════════════════════════════════════════════════════════ */
+
+/*
+ * If SF Pro fonts are not available, the system will fall back to:
+ * 1. -apple-system (macOS/iOS system font)
+ * 2. BlinkMacSystemFont (macOS Chrome)
+ * 3. Segoe UI (Windows)
+ * 4. Helvetica Neue (older macOS)
+ * 5. Helvetica (universal fallback)
+ * 6. Arial (universal fallback)
+ * 7. sans-serif (system default)
+ * 
+ * This ensures consistent appearance even without SF Pro fonts.
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   Font Preloading Hints
+   ═══════════════════════════════════════════════════════════════ */
+
+/*
+ * Add these <link> tags to your HTML <head> for optimal performance:
+ * 
+ * <!-- Preload critical fonts -->
+ * <link rel="preload" href="/fonts/SF-Pro-Display-Semibold.woff2" as="font" type="font/woff2" crossorigin>
+ * <link rel="preload" href="/fonts/SF-Pro-Text-Regular.woff2" as="font" type="font/woff2" crossorigin>
+ * 
+ * <!-- Preload secondary fonts (optional, for faster rendering) -->
+ * <link rel="preload" href="/fonts/SF-Pro-Display-Bold.woff2" as="font" type="font/woff2" crossorigin>
+ * <link rel="preload" href="/fonts/SF-Pro-Text-Semibold.woff2" as="font" type="font/woff2" crossorigin>
+ * 
+ * Benefits:
+ * - Reduces FOUT (Flash of Unstyled Text)
+ * - Improves First Contentful Paint (FCP)
+ * - Better Core Web Vitals scores
+ * - Smoother initial page load
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   Font Installation Instructions
+   ═══════════════════════════════════════════════════════════════ */
+
+/*
+ * STEP 1: Download SF Pro Fonts
+ * Visit: https://developer.apple.com/fonts/
+ * Download: SF Pro font package
+ * 
+ * STEP 2: Extract Font Files
+ * Extract the .woff2 files from the downloaded package
+ * You need 8 files total (4 Display + 4 Text)
+ * 
+ * STEP 3: Place in Public Directory
+ * Create directory: apps/web/public/fonts/
+ * Copy all 8 .woff2 files to this directory
+ * 
+ * STEP 4: Verify File Names
+ * Ensure files are named exactly as referenced:
+ * - SF-Pro-Display-Light.woff2
+ * - SF-Pro-Display-Regular.woff2
+ * - SF-Pro-Display-Semibold.woff2
+ * - SF-Pro-Display-Bold.woff2
+ * - SF-Pro-Text-Light.woff2
+ * - SF-Pro-Text-Regular.woff2
+ * - SF-Pro-Text-Semibold.woff2
+ * - SF-Pro-Text-Bold.woff2
+ * 
+ * STEP 5: Test
+ * Open your application in a browser
+ * Inspect element and check computed font-family
+ * Should show "SF Pro Display" or "SF Pro Text"
+ * 
+ * TROUBLESHOOTING:
+ * - If fonts don't load, check browser console for 404 errors
+ * - Verify file paths match exactly
+ * - Ensure CORS headers allow font loading
+ * - Check that font files are not corrupted
+ * - Try hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
+ */

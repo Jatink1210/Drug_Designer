@@ -1,4 +1,5 @@
 import sys
+import asyncio
 import time
 from disease_normalizer import normalize_disease_name
 from database_searchers import search_all_databases
@@ -40,7 +41,7 @@ def main():
     for db_result in gene_results:
         all_genes.update(db_result.get('genes', []))
     
-    uniprot_mapping = map_genes_to_uniprot(list(all_genes))
+    uniprot_mapping = asyncio.run(map_genes_to_uniprot(list(all_genes)))
     
     # Step 4: Generate Excel output
     print("📊 Generating enhanced Excel report...")

@@ -6,6 +6,7 @@ based on ``DSS_STORAGE_BACKEND`` / ``DSS_MODE``.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -15,6 +16,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 import numpy as np
+
+from core.cache import cache_key as _cache_key, two_tier_get, two_tier_put
 
 log = logging.getLogger(__name__)
 
@@ -95,6 +98,13 @@ class SQLiteVectorStore(VectorStore):
             )
 
     def search(self, collection: str, vector: List[float], limit: int = 10) -> List[Dict[str, Any]]:
+        # Check search result cache (keyed on vector hash + collection)
+        vec_hash = hashlib.sha256(struct.pack(f"<{len(vector)}f", *vector)).hexdigest()[:16]
+        ck = _cache_key("vs_search", collection, f"{vec_hash}:{limit}")
+        cached = two_tier_get(ck)
+        if cached is not None:
+            return cached
+
         query_vec = np.array(vector, dtype=np.float32)
         q_norm = np.linalg.norm(query_vec)
         if q_norm == 0:
@@ -120,7 +130,10 @@ class SQLiteVectorStore(VectorStore):
             results.append({"id": row_id, "score": score, **meta})
 
         results.sort(key=lambda x: x["score"], reverse=True)
-        return results[:limit]
+        final = results[:limit]
+        # Cache search results (TTL 5 min for vector searches)
+        two_tier_put(ck, "vs_search", collection, final, ttl=300)
+        return final
 
     def delete_collection(self, collection: str) -> None:
         with self._conn() as conn:
@@ -149,6 +162,14 @@ class SQLiteVectorStore(VectorStore):
 class QdrantVectorStore(VectorStore):
     """Thin sync wrapper around qdrant-client for full deployment."""
 
+    # §8-9: Spec-mandated collection schema
+    SPEC_COLLECTIONS = {
+        "proteins": {"dimension": 512, "description": "Protein embeddings (ESM-C 600M → 960d → AlignmentModel → 512d)"},
+        "molecules": {"dimension": 512, "description": "Molecule embeddings (MolFormer → 512d)"},
+        "pathways": {"dimension": 512, "description": "Pathway embeddings (KEGG2Vec → 512d)"},
+        "publications": {"dimension": 768, "description": "Publication embeddings (SciBERT → 768d)"},
+    }
+
     def __init__(self, host: str, port: int):
         self._host = host
         self._port = port
@@ -162,6 +183,43 @@ class QdrantVectorStore(VectorStore):
             except ImportError:
                 raise RuntimeError("qdrant-client not installed")
         return self._client
+
+    # Payload fields that need keyword indexes for fast filtered searches
+    _PAYLOAD_INDEXES = ["source", "project_id", "run_id"]
+
+    def ensure_spec_collections(self) -> Dict[str, str]:
+        """Initialize the 4 spec-mandated collections (§8-9) with correct dimensions
+        and create payload indexes for source/project_id/run_id fields (A2)."""
+        from qdrant_client.http import models
+        client = self._get_client()
+        results = {}
+        for name, cfg in self.SPEC_COLLECTIONS.items():
+            try:
+                if not client.collection_exists(name):
+                    client.create_collection(
+                        collection_name=name,
+                        vectors_config=models.VectorParams(
+                            size=cfg["dimension"],
+                            distance=models.Distance.COSINE,
+                        ),
+                    )
+                    # Create payload indexes for filtered searches
+                    for field in self._PAYLOAD_INDEXES:
+                        try:
+                            client.create_payload_index(
+                                collection_name=name,
+                                field_name=field,
+                                field_schema=models.PayloadSchemaType.KEYWORD,
+                            )
+                        except Exception:
+                            pass  # Index may already exist or field type mismatch — non-fatal
+                    results[name] = f"created ({cfg['dimension']}d)"
+                else:
+                    results[name] = "exists"
+            except Exception as e:
+                results[name] = f"error: {e}"
+                log.warning("qdrant_collection_init_failed", collection=name, error=str(e))
+        return results
 
     def upsert(self, collection: str, id: str, vector: List[float], metadata: Dict[str, Any]) -> None:
         from qdrant_client.http import models

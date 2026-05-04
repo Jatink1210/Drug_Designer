@@ -1,0 +1,126 @@
+{
+  "pass": 24,
+  "fail": 0,
+  "results": [
+    {
+      "test": "Health endpoint",
+      "status": "PASS",
+      "detail": "status=degraded"
+    },
+    {
+      "test": "Health v1 endpoint",
+      "status": "PASS",
+      "detail": "services=['cache', 'runtime', 'postgresql', 'redis', 'qdrant', 'plugins']"
+    },
+    {
+      "test": "Diagnostics",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Cockpit analyze (aspirin)",
+      "status": "PASS",
+      "detail": "status=ok"
+    },
+    {
+      "test": "Recent runs",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Source health",
+      "status": "PASS",
+      "detail": "sources=32"
+    },
+    {
+      "test": "Entity Intelligence (BRCA1)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Graph build (TP53)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Pathway search (apoptosis)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Structure (P04637/TP53)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Design plugins",
+      "status": "PASS",
+      "detail": "count=5"
+    },
+    {
+      "test": "RDKit descriptors (aspirin)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Clinical workflow create",
+      "status": "PASS",
+      "detail": "steps=10, id=0c23797d"
+    },
+    {
+      "test": "SynthArena session",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "ADMET lab",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Retrosynthesis lab",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Contradiction analyze",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "PICO extract",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Settings GET",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Settings diagnostics",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "test": "Deprecated route /operations",
+      "status": "PASS",
+      "detail": "frontend redirect"
+    },
+    {
+      "test": "Deprecated route /reports",
+      "status": "PASS",
+      "detail": "frontend redirect"
+    },
+    {
+      "test": "Deprecated route /exports",
+      "status": "PASS",
+      "detail": "frontend redirect"
+    },
+    {
+      "test": "Deprecated route /notes",
+      "status": "PASS",
+      "detail": "frontend redirect"
+    }
+  ]
+}

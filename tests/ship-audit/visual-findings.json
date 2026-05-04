@@ -1,0 +1,106 @@
+[
+  {
+    "page": "01-cockpit",
+    "path": "/workspace",
+    "bodyLength": 9,
+    "pastGate": false,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "02-evidence",
+    "path": "/evidence/search",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "03-entity-intel",
+    "path": "/entity-intelligence",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "04-kg",
+    "path": "/graph",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "05-pathways",
+    "path": "/pathways",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "06-structure",
+    "path": "/structure",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "07-design",
+    "path": "/design",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "08-clinical",
+    "path": "/clinical-design",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "09-syntharena",
+    "path": "/syntharena",
+    "bodyLength": 917,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "10-labs",
+    "path": "/labs",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "11-contradictions",
+    "path": "/contradiction-similarity",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "12-pico",
+    "path": "/pico",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  },
+  {
+    "page": "13-settings",
+    "path": "/settings",
+    "bodyLength": 478,
+    "pastGate": true,
+    "consoleErrors": 0,
+    "errors": []
+  }
+]

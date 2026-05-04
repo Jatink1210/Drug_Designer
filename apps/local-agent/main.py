@@ -80,6 +80,55 @@ def _check_llama_cpp():
     except Exception:
         return {"status": "offline"}
 
+
+# ── J-1: Full hardware capability scan (pynvml + psutil) ─
+
+@app.get("/hardware/capabilities")
+def get_hardware_capabilities():
+    """J-1: Deep hardware scan — GPU VRAM (pynvml), CPU, RAM, disk, model cache."""
+    from engine import HardwareScanner
+    scanner = HardwareScanner()
+    return scanner.scan()
+
+
+# ── J-2: Runtime inventory sync ───────────────────────────
+
+@app.post("/runtime/sync")
+async def sync_runtime_inventory(api_url: str = "http://localhost:8000", token: str = ""):
+    """J-2: Build runtime_inventory_json and POST it to the API server."""
+    from engine import RuntimeInventory
+    inv = RuntimeInventory(api_url=api_url, token=token)
+    inventory = inv.build()
+    ok = await inv.sync_to_api()
+    return {"status": "synced" if ok else "local_only", "inventory": inventory}
+
+
+@app.get("/runtime/inventory")
+def get_runtime_inventory():
+    """J-2: Return current runtime inventory snapshot (without syncing)."""
+    from engine import RuntimeInventory
+    inv = RuntimeInventory()
+    return inv.build()
+
+
+# ── J-3: Local model dispatch ─────────────────────────────
+
+@app.post("/agent/inference")
+async def agent_inference(payload: dict):
+    """J-3: Dispatch inference task to optimal backend (local GPU / Ollama / hosted API)."""
+    from engine import LocalModelDispatcher
+    dispatcher = LocalModelDispatcher()
+    task = payload.get("task", "generate")
+    result = await dispatcher.dispatch(task, payload)
+    return result
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=4133)
+
+        return {"status": "offline"}
+
 @app.post("/run_airllm_pass")
 def run_airllm(model_id: str = "llama3"):
     from inference.airllm_optim import AirLLMPagingOptimizer

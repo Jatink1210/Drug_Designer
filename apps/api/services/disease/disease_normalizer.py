@@ -80,25 +80,45 @@ def _search_ncbi_mesh(disease_name: str) -> Dict:
 def _standardize_disease_name(disease_name: str) -> str:
     """Manual standardization of common disease names"""
     standardization_map = {
-        'diabetes': 'Diabetes Mellitus',
-        'cancer': 'Neoplasms',
-        'alzheimer': "Alzheimer's Disease",
-        'parkinson': "Parkinson's Disease",
+        'pancreatic ductal adenocarcinoma': 'Pancreatic Ductal Adenocarcinoma',
+        'triple-negative breast cancer': 'Triple Negative Breast Neoplasms',
+        'triple negative breast cancer': 'Triple Negative Breast Neoplasms',
+        'hepatocellular carcinoma': 'Hepatocellular Carcinoma',
+        'amyotrophic lateral sclerosis': 'Amyotrophic Lateral Sclerosis',
+        'systemic lupus erythematosus': 'Systemic Lupus Erythematosus',
+        'chronic myeloid leukemia': 'Leukemia, Myelogenous, Chronic, BCR-ABL Positive',
+        'glioblastoma multiforme': 'Glioblastoma',
+        'inflammatory bowel disease': 'Inflammatory Bowel Diseases',
+        'multiple sclerosis': 'Multiple Sclerosis',
+        'rheumatoid arthritis': 'Rheumatoid Arthritis',
+        'lung adenocarcinoma': 'Lung Neoplasms',
+        'cystic fibrosis': 'Cystic Fibrosis',
+        'prostate cancer': 'Prostatic Neoplasms',
+        'breast cancer': 'Breast Neoplasms',
+        'lung cancer': 'Lung Neoplasms',
+        'colon cancer': 'Colonic Neoplasms',
+        'ovarian cancer': 'Ovarian Neoplasms',
         'heart disease': 'Cardiovascular Diseases',
+        'type 2 diabetes': 'Type 2 Diabetes Mellitus',
+        'type 1 diabetes': 'Type 1 Diabetes Mellitus',
+        'parkinsons disease': "Parkinson Disease",
+        'parkinson': "Parkinson Disease",
+        'alzheimer': "Alzheimer Disease",
         'hypertension': 'Hypertension',
         'depression': 'Depressive Disorder',
         'asthma': 'Asthma',
         'copd': 'Pulmonary Disease, Chronic Obstructive',
         'covid': 'COVID-19',
-        'breast cancer': 'Breast Neoplasms',
-        'lung cancer': 'Lung Neoplasms',
-        'stroke': 'Stroke'
+        'stroke': 'Stroke',
+        'diabetes': 'Diabetes Mellitus',
+        'cancer': 'Neoplasms',
     }
     
     disease_lower = disease_name.lower().strip()
-    for key, standard in standardization_map.items():
+    # Sort by longest key first so specific terms match before generic ones
+    for key in sorted(standardization_map.keys(), key=len, reverse=True):
         if key in disease_lower:
-            return standard
+            return standardization_map[key]
     
     # Capitalize first letter of each word
     return ' '.join(word.capitalize() for word in disease_name.split())

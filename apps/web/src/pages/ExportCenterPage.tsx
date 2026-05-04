@@ -1,164 +1,214 @@
-/** ExportCenterPage — Centralized export surface for all artifacts across all modules. */
+/** ExportCenterPage — Centralized export surface for all artifacts (§28, §71). */
 
 import { useState, useEffect } from "react";
-import { ensureApiBase } from "@/lib/api";
-import { Download, FileText, Table2, Network, FlaskConical, Archive } from "lucide-react";
+import { exportsListAPI, exportCreateAPI, exportDownloadAPI, ensureApiBase } from "@/lib/api";
+import StateWrapper, { type ViewState } from "@/components/ui/StateWrapper";
+import {
+  Download,
+  FileText,
+  Table2,
+  Network,
+  FlaskConical,
+  Archive,
+  Plus,
+  Loader2,
+} from "lucide-react";
 
-interface ExportItem {
-    id: string;
-    type: string;
-    title: string;
-    subtitle: string;
-    formats: string[];
-    created?: string;
+interface ExportRecord {
+  id: string;
+  format: string;
+  title: string;
+  status: string;
+  created_at?: string;
+  file_size_bytes?: number;
 }
 
 interface ExportGroup {
-    category: string;
-    icon: React.ReactNode;
-    items: ExportItem[];
+  category: string;
+  icon: React.ReactNode;
+  items: ExportRecord[];
 }
 
-const MOCK_GROUPS: ExportGroup[] = [
-    {
-        category: "Decision Dossiers",
-        icon: <FileText size={16} />,
-        items: [
-            { id: "d1", type: "dossier", title: "Alzheimer's EGFR Dossier", subtitle: "12 sections · 47 citations", formats: ["HTML", "JSON", "PDF"], created: "Mar 24" },
-            { id: "d2", type: "dossier", title: "NSCLC Resistance Analysis", subtitle: "8 sections · 23 citations", formats: ["HTML", "JSON"], created: "Mar 22" },
-            { id: "d3", type: "dossier", title: "BACE1 Inhibitor Review", subtitle: "6 sections · 18 citations", formats: ["HTML", "JSON", "PDF"], created: "Mar 20" },
-        ],
-    },
-    {
-        category: "Evidence Tables",
-        icon: <Table2 size={16} />,
-        items: [
-            { id: "e1", type: "evidence", title: "EGFR Inhibitors", subtitle: "47 items pinned", formats: ["CSV", "JSON"], created: "Mar 24" },
-            { id: "e2", type: "evidence", title: "Alzheimer's Targets", subtitle: "12 items pinned", formats: ["CSV", "JSON"], created: "Mar 23" },
-        ],
-    },
-    {
-        category: "Disease Intelligence Workbooks",
-        icon: <FileText size={16} />,
-        items: [
-            { id: "w1", type: "workbook", title: "Alzheimer's Pipeline", subtitle: "12 targets, 142 genes", formats: ["Excel"], created: "Mar 24" },
-        ],
-    },
-    {
-        category: "Graph Snapshots",
-        icon: <Network size={16} />,
-        items: [
-            { id: "g1", type: "graph", title: "EGFR Subgraph", subtitle: "89 nodes, 234 edges", formats: ["JSON", "SVG"], created: "Mar 24" },
-        ],
-    },
-    {
-        category: "SynthArena Sessions",
-        icon: <FlaskConical size={16} />,
-        items: [
-            { id: "a1", type: "arena", title: "EGFR T790M Candidates", subtitle: "3 candidates, 10 criteria", formats: ["CSV", "JSON"], created: "Mar 25" },
-        ],
-    },
-    {
-        category: "Molecule Reports",
-        icon: <FlaskConical size={16} />,
-        items: [
-            { id: "m1", type: "molecule", title: "Osimertinib Analog Set", subtitle: "3 analogs, ADMET + binding", formats: ["CSV", "SDF"], created: "Mar 24" },
-        ],
-    },
-    {
-        category: "Run Recipes & Trace Bundles",
-        icon: <Archive size={16} />,
-        items: [
-            { id: "r1", type: "trace", title: "Run #8 Context Bundle", subtitle: "Full reproducibility trace", formats: ["ZIP"], created: "Mar 24" },
-            { id: "r2", type: "trace", title: "Run #5 Context Bundle", subtitle: "Full reproducibility trace", formats: ["ZIP"], created: "Mar 22" },
-        ],
-    },
-];
+function groupExports(records: ExportRecord[]): ExportGroup[] {
+  const map: Record<string, ExportRecord[]> = {};
+  for (const r of records) {
+    const cat = formatToCategory(r.format);
+    (map[cat] ??= []).push(r);
+  }
+  return Object.entries(map).map(([category, items]) => ({
+    category,
+    icon: categoryIcon(category),
+    items,
+  }));
+}
+
+function formatToCategory(fmt: string): string {
+  switch (fmt) {
+    case "pdf": case "docx": return "Decision Dossiers";
+    case "csv": return "Evidence Tables";
+    case "graphml": case "cytoscape": return "Graph Snapshots";
+    case "sdf": case "pdb": return "Molecule Exports";
+    case "png": return "Media Exports";
+    default: return "General Exports";
+  }
+}
+
+function categoryIcon(cat: string): React.ReactNode {
+  switch (cat) {
+    case "Decision Dossiers": return <FileText size={16} />;
+    case "Evidence Tables": return <Table2 size={16} />;
+    case "Graph Snapshots": return <Network size={16} />;
+    case "Molecule Exports": return <FlaskConical size={16} />;
+    default: return <Archive size={16} />;
+  }
+}
 
 export default function ExportCenterPage() {
-    const [groups, setGroups] = useState<ExportGroup[]>(MOCK_GROUPS);
+  const [groups, setGroups] = useState<ExportGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
-    useEffect(() => {
-        // Try to fetch from backend; fall back to mock data
-        (async () => {
-            try {
-                const base = await ensureApiBase();
-                const res = await fetch(`${base}/exports`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.groups) setGroups(data.groups);
-                }
-            } catch {
-                // Use mock data
-            }
-        })();
-    }, []);
+  const fetchExports = async () => {
+    setFetchError(null);
+    try {
+      const data = await exportsListAPI();
+      const records = (data as unknown as ExportRecord[]) || [];
+      setGroups(records.length > 0 ? groupExports(records) : []);
+    } catch (err: unknown) {
+      setFetchError(err instanceof Error ? err.message : "Failed to load exports");
+      setGroups([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleDownload = (item: ExportItem, format: string) => {
-        // Placeholder: would trigger actual download via backend
-        alert(`Downloading ${item.title} as ${format}...`);
-    };
+  useEffect(() => { fetchExports(); }, []);
 
-    return (
-        <div className="flex-1 overflow-y-auto p-8" style={{ background: "var(--bg-app)" }}>
-            <h1
-                className="text-xl mb-1"
-                style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}
-            >
-                Export Center
-            </h1>
-            <p className="text-xs mb-6" style={{ color: "var(--text-muted)" }}>
-                Download dossiers, evidence tables, graph snapshots, and reproducibility traces.
-                File names follow: drugdesigner_{"{type}_{id}_{date}.{ext}"}
-            </p>
+  const handleDownload = async (item: ExportRecord) => {
+    if (item.status === "completed") {
+      await exportDownloadAPI(item.id);
+    }
+  };
 
-            {groups.map(group => (
-                <div key={group.category} className="mb-6">
-                    <div className="flex items-center gap-2 mb-3">
-                        <span style={{ color: "var(--text-muted)" }}>{group.icon}</span>
-                        <span
-                            className="text-[10px] font-bold uppercase tracking-widest"
-                            style={{ color: "var(--text-muted)" }}
-                        >
-                            {group.category}
-                        </span>
-                    </div>
+  const handleNewExport = async () => {
+    setCreating(true);
+    setCreateError(null);
+    try {
+      await exportCreateAPI({ format: "json", scope: {}, title: "Quick Export" });
+      await fetchExports();
+    } catch (err: unknown) {
+      setCreateError(err instanceof Error ? err.message : "Export creation failed");
+    }
+    setCreating(false);
+  };
 
-                    {group.items.map(item => (
-                        <div
-                            key={item.id}
-                            className="flex items-center gap-4 py-3 px-4 mb-1 transition-colors"
-                            style={{
-                                borderBottom: "1px solid var(--border)",
-                            }}
-                        >
-                            <div className="flex-1">
-                                <div className="text-sm font-semibold">{item.title}</div>
-                                <div className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                                    {item.subtitle}{item.created && ` · ${item.created}`}
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {item.formats.map(fmt => (
-                                    <button
-                                        key={fmt}
-                                        onClick={() => handleDownload(item, fmt)}
-                                        className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded transition-colors"
-                                        style={{
-                                            border: "1px solid var(--border)",
-                                            color: "var(--accent)",
-                                            background: "var(--bg-elevated)",
-                                        }}
-                                    >
-                                        <Download size={10} />
-                                        {fmt}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ))}
+  return (
+    <div
+      className="flex-1 overflow-y-auto p-8"
+      style={{ background: "var(--bg-app)" }}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <h1
+          className="text-xl"
+          style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}
+        >
+          Export Center
+        </h1>
+        <button
+          onClick={handleNewExport}
+          disabled={creating}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg text-white transition-colors disabled:opacity-50"
+          style={{ background: "var(--accent)" }}
+        >
+          {creating ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+          New Export
+        </button>
+      </div>
+      <p className="text-xs mb-6" style={{ color: "var(--text-muted)" }}>
+        Download dossiers, evidence tables, graph snapshots, and reproducibility
+        traces.
+      </p>
+
+      {fetchError && (
+        <div className="rounded-lg border p-4 flex items-center gap-3 mb-4"
+          style={{ borderColor: "#ef4444", background: "rgba(239,68,68,0.08)" }}>
+          <span className="text-sm" style={{ color: "#ef4444" }}>{fetchError}</span>
+          <button onClick={fetchExports}
+            className="ml-auto px-3 py-1 rounded text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200">
+            Retry
+          </button>
         </div>
-    );
+      )}
+
+      {createError && (
+        <div className="rounded-lg border p-3 flex items-center gap-2 mb-4"
+          style={{ borderColor: "#f59e0b", background: "rgba(245,158,11,0.08)" }}>
+          <span className="text-xs" style={{ color: "#d97706" }}>{createError}</span>
+          <button onClick={() => setCreateError(null)}
+            className="ml-auto text-amber-500 hover:text-amber-700 text-xs">×</button>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        groups.map((group) => (
+          <div key={group.category} className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <span style={{ color: "var(--text-muted)" }}>{group.icon}</span>
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: "var(--text-muted)" }}
+              >
+                {group.category}
+              </span>
+            </div>
+
+            {group.items.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-4 py-3 px-4 mb-1 transition-colors"
+                style={{ borderBottom: "1px solid var(--border)" }}
+              >
+                <div className="flex-1">
+                  <div className="text-sm font-semibold">{item.title || `Export ${item.id.slice(0, 8)}`}</div>
+                  <div
+                    className="text-[11px]"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {item.format?.toUpperCase()} · {item.status}
+                    {item.created_at && ` · ${new Date(item.created_at).toLocaleDateString()}`}
+                    {item.file_size_bytes != null && ` · ${(item.file_size_bytes / 1024).toFixed(0)} KB`}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {item.status === "completed" && (
+                    <button
+                      onClick={() => handleDownload(item)}
+                      className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded transition-colors"
+                      style={{
+                        border: "1px solid var(--border)",
+                        color: "var(--accent)",
+                        background: "var(--bg-elevated)",
+                      }}
+                    >
+                      <Download size={10} />
+                      Download
+                    </button>
+                  )}
+                  {item.status === "pending" && (
+                    <span className="text-[10px] text-[var(--text-muted)]">Processing...</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))
+      )}
+    </div>
+  );
 }

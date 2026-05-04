@@ -1,0 +1,169 @@
+"""SDF export service for molecule candidates."""
+
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional
+
+import structlog
+
+log = structlog.get_logger()
+
+
+class SDFMoleculeExporter:
+    """
+    SDF (Structure-Data File) exporter for molecule candidates.
+    
+    Exports molecules in SDF format compatible with chemistry software
+    like RDKit, ChemDraw, PyMOL, and other molecular visualization tools.
+    """
+    
+    def __init__(self, output_path: str):
+        """
+        Initialize SDF exporter.
+        
+        Args:
+            output_path: Path to output SDF file
+        """
+        self.output_path = output_path
+        log.info("sdf_exporter_initialized", output_path=output_path)
+    
+    def export_molecules(
+        self,
+        molecules: List[Dict[str, Any]]
+    ) -> str:
+        """
+        Export molecules to SDF format.
+        
+        Args:
+            molecules: List of molecule dictionaries with structure and properties
+            
+        Returns:
+            Path to generated SDF file
+        """
+        try:
+            from rdkit import Chem
+            from rdkit.Chem import AllChem
+            
+            writer = Chem.SDWriter(self.output_path)
+            
+            for mol_data in molecules:
+                # Get SMILES or MOL block
+                smiles = mol_data.get('smiles')
+                mol_block = mol_data.get('mol_block')
+                
+                if smiles:
+                    mol = Chem.MolFromSmiles(smiles)
+                elif mol_block:
+                    mol = Chem.MolFromMolBlock(mol_block)
+                else:
+                    log.warning("molecule_skipped", molecule_id=mol_data.get('id'), reason="no structure")
+                    continue
+                
+                if mol is None:
+                    log.warning("molecule_parse_failed", molecule_id=mol_data.get('id'))
+                    continue
+                
+                # Generate 3D coordinates if not present
+                if not mol.GetNumConformers():
+                    AllChem.EmbedMolecule(mol, randomSeed=42)
+                    AllChem.MMFFOptimizeMolecule(mol)
+                
+                # Add properties
+                properties = mol_data.get('properties', {})
+                
+                # Standard properties
+                if 'id' in mol_data:
+                    mol.SetProp('ID', str(mol_data['id']))
+                if 'name' in mol_data:
+                    mol.SetProp('Name', str(mol_data['name']))
+                
+                # Molecular properties
+                for key, value in properties.items():
+                    if value is not None:
+                        mol.SetProp(key, str(value))
+                
+                # Drug-like properties
+                if 'molecular_weight' in mol_data:
+                    mol.SetProp('MolecularWeight', str(mol_data['molecular_weight']))
+                if 'logp' in mol_data:
+                    mol.SetProp('LogP', str(mol_data['logp']))
+                if 'hbd' in mol_data:
+                    mol.SetProp('HBD', str(mol_data['hbd']))
+                if 'hba' in mol_data:
+                    mol.SetProp('HBA', str(mol_data['hba']))
+                if 'tpsa' in mol_data:
+                    mol.SetProp('TPSA', str(mol_data['tpsa']))
+                
+                # Activity data
+                if 'activity' in mol_data:
+                    mol.SetProp('Activity', str(mol_data['activity']))
+                if 'ic50' in mol_data:
+                    mol.SetProp('IC50', str(mol_data['ic50']))
+                
+                # Write molecule
+                writer.write(mol)
+            
+            writer.close()
+            
+            log.info("sdf_export_complete", output_path=self.output_path, num_molecules=len(molecules))
+            return self.output_path
+            
+        except ImportError:
+            log.error("rdkit_not_installed", msg="Install with: pip install rdkit")
+            raise
+        except Exception as e:
+            log.error("sdf_export_failed", error=str(e))
+            raise
+    
+    def export_molecules_simple(
+        self,
+        molecules: List[Dict[str, Any]]
+    ) -> str:
+        """
+        Export molecules to SDF format without RDKit (simple text-based).
+        
+        Args:
+            molecules: List of molecule dictionaries
+            
+        Returns:
+            Path to generated SDF file
+        """
+        try:
+            with open(self.output_path, 'w') as f:
+                for mol_data in molecules:
+                    # Write molecule header
+                    mol_id = mol_data.get('id', 'UNKNOWN')
+                    mol_name = mol_data.get('name', mol_id)
+                    
+                    f.write(f"{mol_name}\n")
+                    f.write("  Generated by Drug Designer\n")
+                    f.write("\n")
+                    
+                    # Write counts line (simplified)
+                    f.write("  0  0  0  0  0  0  0  0  0  0999 V2000\n")
+                    
+                    # Write properties block
+                    f.write("M  END\n")
+                    
+                    # Write data items
+                    properties = mol_data.get('properties', {})
+                    
+                    if 'id' in mol_data:
+                        f.write(f"> <ID>\n{mol_data['id']}\n\n")
+                    
+                    if 'smiles' in mol_data:
+                        f.write(f"> <SMILES>\n{mol_data['smiles']}\n\n")
+                    
+                    for key, value in properties.items():
+                        if value is not None:
+                            f.write(f"> <{key}>\n{value}\n\n")
+                    
+                    # End of molecule
+                    f.write("$$$$\n")
+            
+            log.info("sdf_export_complete_simple", output_path=self.output_path, num_molecules=len(molecules))
+            return self.output_path
+            
+        except Exception as e:
+            log.error("sdf_export_failed", error=str(e))
+            raise

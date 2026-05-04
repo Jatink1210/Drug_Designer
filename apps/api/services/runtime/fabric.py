@@ -8,6 +8,9 @@ import logging
 from typing import Dict, Any, Optional
 from enum import Enum
 
+from config import settings
+from services.runtime.policy import get_remote_base_url, get_runtime_mode, ollama_enabled
+
 log = logging.getLogger(__name__)
 
 class RuntimeMode(str, Enum):
@@ -36,9 +39,9 @@ class RuntimeFabric:
             "mode": RuntimeMode.AUTO.value,
             "hosted_endpoint": "http://localhost:8000",
             "local_agent_endpoint": "http://localhost:4133",
-            "llm_endpoint": "http://localhost:11434",
+            "llm_endpoint": settings.ollama_host if ollama_enabled() else get_remote_base_url(),
             "llama_cpp_endpoint": "http://localhost:8080",
-            "fallback_order": ["local_gpu", "local_cpu", "hosted"],
+            "fallback_order": ["hosted", "local_gpu", "local_cpu"],
             "model_preferences": {
                 "chat": "llama3",
                 "retrieval": "nomic-embed-text",
@@ -69,8 +72,10 @@ class RuntimeFabric:
         if mode == RuntimeMode.GPU.value:
             return self.config.get("local_agent_endpoint", "http://localhost:4133")
         elif mode == RuntimeMode.CPU.value:
-            return self.config.get("llm_endpoint", "http://localhost:11434")
+            return self.config.get("llm_endpoint", settings.ollama_host if ollama_enabled() else get_remote_base_url())
         else:  # AUTO
+            if get_runtime_mode() == "hosted":
+                return self.config.get("hosted_endpoint", get_remote_base_url())
             # Try GPU first, then CPU, then hosted
             import httpx
             for endpoint_key in ["local_agent_endpoint", "llm_endpoint", "hosted_endpoint"]:
@@ -81,7 +86,7 @@ class RuntimeFabric:
                         return ep
                 except Exception:
                     continue
-            return self.config.get("llm_endpoint", "http://localhost:11434")
+            return self.config.get("hosted_endpoint", get_remote_base_url())
 
     def get_config(self) -> Dict[str, Any]:
         return {**self.config, "resolved_endpoint": self.get_inference_endpoint()}

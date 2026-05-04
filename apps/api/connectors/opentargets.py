@@ -37,7 +37,7 @@ class OpenTargetsConnector(BaseConnector):
                 "entity_type": mapped,
                 "canonical_name": h.get("name", ""),
                 "name": h.get("name", ""),
-                "description": h.get("description", "")[:300],
+                "description": (h.get("description") or "")[:300],
                 "association_score": h.get("score"),
                 "url": "https://platform.opentargets.org/%s/%s" % (etype, eid),
                 "provenance": [self._prov(

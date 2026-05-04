@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, List
+from collections import defaultdict
 
 import httpx
 import structlog
@@ -16,6 +17,31 @@ DEFAULT_TIMEOUT = 15.0
 MAX_RETRIES = 3
 BACKOFF_BASE = 1.0
 BACKOFF_MAX = 10.0
+
+# Connection pooling configuration
+MAX_CONNECTIONS = 100
+MAX_KEEPALIVE_CONNECTIONS = 20
+KEEPALIVE_EXPIRY = 30.0  # seconds
+
+# §64 Per-operation tiered timeouts (seconds)
+TIERED_TIMEOUTS = {
+    "health": 2.0,
+    "graph": 5.0,
+    "evidence": 10.0,
+    "search": 10.0,
+    "targets": 15.0,
+    "structure": 30.0,
+    "design": 60.0,
+    "disease": 120.0,
+    "dossier": 300.0,
+    "retrosynthesis": 120.0,
+    "default": 15.0,
+}
+
+
+def get_tiered_timeout(operation: str = "default") -> float:
+    """Return the spec-mandated timeout for an operation category (§64)."""
+    return TIERED_TIMEOUTS.get(operation, TIERED_TIMEOUTS["default"])
 
 
 class CircuitBreaker:
@@ -82,17 +108,66 @@ class RateLimiter:
 _circuit_breaker = CircuitBreaker()
 _rate_limiter = RateLimiter()
 
+# Performance metrics tracking
+_performance_metrics: Dict[str, List[float]] = defaultdict(list)
+_request_counts: Dict[str, int] = defaultdict(int)
+_error_counts: Dict[str, int] = defaultdict(int)
+
 
 def get_rate_limiter() -> RateLimiter:
     return _rate_limiter
+
+
+def get_performance_metrics() -> Dict[str, Any]:
+    """Get performance metrics for all hosts."""
+    metrics = {}
+    
+    for host, latencies in _performance_metrics.items():
+        if not latencies:
+            continue
+        
+        metrics[host] = {
+            "total_requests": _request_counts[host],
+            "total_errors": _error_counts[host],
+            "error_rate": round(_error_counts[host] / max(_request_counts[host], 1) * 100, 2),
+            "avg_latency_ms": round(sum(latencies) / len(latencies), 2),
+            "p50_latency_ms": round(sorted(latencies)[len(latencies) // 2], 2),
+            "p95_latency_ms": round(sorted(latencies)[int(len(latencies) * 0.95)], 2),
+            "p99_latency_ms": round(sorted(latencies)[int(len(latencies) * 0.99)], 2),
+        }
+    
+    return metrics
+
+
+def reset_performance_metrics():
+    """Reset performance metrics."""
+    _performance_metrics.clear()
+    _request_counts.clear()
+    _error_counts.clear()
+    log.info("performance_metrics_reset")
 
 
 class ResilientClient:
     """Async HTTP client with retries, exponential backoff, circuit breaker, and rate limiting."""
 
     def __init__(self, timeout: float = DEFAULT_TIMEOUT, max_retries: int = MAX_RETRIES):
-        self._client = httpx.AsyncClient(timeout=timeout, follow_redirects=True)
+        # Connection pooling configuration
+        limits = httpx.Limits(
+            max_connections=MAX_CONNECTIONS,
+            max_keepalive_connections=MAX_KEEPALIVE_CONNECTIONS,
+            keepalive_expiry=KEEPALIVE_EXPIRY,
+        )
+        
+        self._client = httpx.AsyncClient(
+            timeout=timeout,
+            follow_redirects=True,
+            limits=limits,
+        )
         self._max_retries = max_retries
+        
+        log.info("resilient_client_initialized",
+                max_connections=MAX_CONNECTIONS,
+                max_keepalive=MAX_KEEPALIVE_CONNECTIONS)
 
     async def close(self) -> None:
         await self._client.aclose()
@@ -177,16 +252,29 @@ class ResilientClient:
 
                 resp.raise_for_status()
                 _circuit_breaker.record_success(host)
+                
+                # Track performance metrics
+                _request_counts[host] += 1
+                _performance_metrics[host].append(meta["elapsed_ms"])
+                
+                # Keep only last 1000 measurements per host
+                if len(_performance_metrics[host]) > 1000:
+                    _performance_metrics[host] = _performance_metrics[host][-1000:]
 
-                body = resp.json()
+                try:
+                    body = resp.json()
+                except Exception:
+                    body = resp.text
                 return body, meta
 
             except httpx.TimeoutException:
                 last_error = "timeout"
                 _circuit_breaker.record_failure(host)
+                _error_counts[host] += 1
                 await asyncio.sleep(min(BACKOFF_BASE * (2 ** attempt), BACKOFF_MAX))
             except Exception as exc:
                 last_error = str(exc)
+                _error_counts[host] += 1
                 if attempt < self._max_retries - 1:
                     await asyncio.sleep(min(BACKOFF_BASE * (2 ** attempt), BACKOFF_MAX))
                 else:

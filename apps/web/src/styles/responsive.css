@@ -1,0 +1,729 @@
+/**
+ * Responsive Design System - Apple Design System
+ * 
+ * Implements FR-UI-006: Responsive Design
+ * 
+ * Features:
+ * - Mobile-first approach
+ * - Three breakpoints: Mobile (320-767px), Tablet (768-1023px), Desktop (1024px+)
+ * - Touch-friendly interactions on mobile
+ * - Responsive typography scaling
+ * - Responsive spacing
+ * - Responsive grid system
+ * - Container utilities
+ * 
+ * Apple Responsive Principles:
+ * - Content-first design
+ * - Fluid layouts that adapt gracefully
+ * - Touch targets minimum 44x44px
+ * - Readable line lengths (45-75 characters)
+ * - Appropriate font sizes for each device
+ */
+
+:root {
+  /* Breakpoints */
+  --breakpoint-mobile: 320px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+  --breakpoint-wide: 1440px;
+  
+  /* Container max-widths */
+  --container-mobile: 100%;
+  --container-tablet: 720px;
+  --container-desktop: 960px;
+  --container-wide: 1200px;
+  
+  /* Grid columns */
+  --grid-columns: 12;
+  --grid-gap: 24px;
+  
+  /* Touch target sizes */
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+  
+  /* Readable line lengths */
+  --line-length-min: 45ch;
+  --line-length-max: 75ch;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Container System
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Responsive containers that adapt to viewport width
+ */
+
+.container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* Mobile (320px - 767px) */
+@media (min-width: 320px) {
+  .container {
+    max-width: var(--container-mobile);
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) {
+  .container {
+    max-width: var(--container-tablet);
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+  .container {
+    max-width: var(--container-desktop);
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+/* Wide (1440px+) */
+@media (min-width: 1440px) {
+  .container {
+    max-width: var(--container-wide);
+  }
+}
+
+/* Fluid container (no max-width) */
+.container-fluid {
+  width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 768px) {
+  .container-fluid {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-fluid {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Grid System
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * 12-column responsive grid system
+ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), 1fr);
+  gap: var(--grid-gap);
+}
+
+/* Mobile: Single column by default */
+@media (max-width: 767px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* Tablet: Adjust gap */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .grid {
+    gap: 20px;
+  }
+}
+
+/* Column span utilities */
+.col-1 { grid-column: span 1; }
+.col-2 { grid-column: span 2; }
+.col-3 { grid-column: span 3; }
+.col-4 { grid-column: span 4; }
+.col-5 { grid-column: span 5; }
+.col-6 { grid-column: span 6; }
+.col-7 { grid-column: span 7; }
+.col-8 { grid-column: span 8; }
+.col-9 { grid-column: span 9; }
+.col-10 { grid-column: span 10; }
+.col-11 { grid-column: span 11; }
+.col-12 { grid-column: span 12; }
+
+/* Mobile column spans */
+@media (max-width: 767px) {
+  .col-mobile-1 { grid-column: span 1; }
+  .col-mobile-2 { grid-column: span 2; }
+  .col-mobile-3 { grid-column: span 3; }
+  .col-mobile-4 { grid-column: span 4; }
+  .col-mobile-6 { grid-column: span 6; }
+  .col-mobile-12 { grid-column: span 12; }
+}
+
+/* Tablet column spans */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .col-tablet-1 { grid-column: span 1; }
+  .col-tablet-2 { grid-column: span 2; }
+  .col-tablet-3 { grid-column: span 3; }
+  .col-tablet-4 { grid-column: span 4; }
+  .col-tablet-6 { grid-column: span 6; }
+  .col-tablet-8 { grid-column: span 8; }
+  .col-tablet-12 { grid-column: span 12; }
+}
+
+/* Desktop column spans */
+@media (min-width: 1024px) {
+  .col-desktop-1 { grid-column: span 1; }
+  .col-desktop-2 { grid-column: span 2; }
+  .col-desktop-3 { grid-column: span 3; }
+  .col-desktop-4 { grid-column: span 4; }
+  .col-desktop-6 { grid-column: span 6; }
+  .col-desktop-8 { grid-column: span 8; }
+  .col-desktop-9 { grid-column: span 9; }
+  .col-desktop-12 { grid-column: span 12; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Typography Scaling
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Typography scales down on smaller devices for better readability
+ */
+
+/* Mobile (320px - 767px) - Scale down by ~15% */
+@media (max-width: 767px) {
+  :root {
+    /* Display sizes */
+    --font-size-display-lg: 51px;
+    --font-size-display-md: 43px;
+    --font-size-display-sm: 34px;
+    
+    /* Headline sizes */
+    --font-size-headline-lg: 28px;
+    --font-size-headline-md: 24px;
+    --font-size-headline-sm: 20px;
+    
+    /* Title sizes */
+    --font-size-title-lg: 18px;
+    --font-size-title-md: 16px;
+    --font-size-title-sm: 14px;
+    
+    /* Body sizes */
+    --font-size-body-lg: 16px;
+    --font-size-body: 14px;
+    --font-size-body-sm: 12px;
+    
+    /* Caption sizes */
+    --font-size-caption-lg: 11px;
+    --font-size-caption: 10px;
+    
+    /* Line heights - slightly more generous on mobile */
+    --line-height-display: 1.1;
+    --line-height-headline: 1.15;
+    --line-height-title: 1.3;
+    --line-height-body: 1.5;
+    --line-height-caption: 1.4;
+  }
+}
+
+/* Tablet (768px - 1023px) - Scale down by ~8% */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    /* Display sizes */
+    --font-size-display-lg: 55px;
+    --font-size-display-md: 46px;
+    --font-size-display-sm: 37px;
+    
+    /* Headline sizes */
+    --font-size-headline-lg: 30px;
+    --font-size-headline-md: 26px;
+    --font-size-headline-sm: 22px;
+    
+    /* Title sizes */
+    --font-size-title-lg: 19px;
+    --font-size-title-md: 17px;
+    --font-size-title-sm: 15px;
+    
+    /* Body sizes */
+    --font-size-body-lg: 17px;
+    --font-size-body: 15px;
+    --font-size-body-sm: 13px;
+    
+    /* Caption sizes */
+    --font-size-caption-lg: 12px;
+    --font-size-caption: 11px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Spacing
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Spacing scales down on smaller devices
+ */
+
+/* Mobile (320px - 767px) - Reduce spacing by ~40% */
+@media (max-width: 767px) {
+  :root {
+    --spacing-xs: 2px;
+    --spacing-sm: 5px;
+    --spacing-md: 10px;
+    --spacing-lg: 14px;
+    --spacing-xl: 19px;
+    --spacing-2xl: 24px;
+    --spacing-3xl: 29px;
+    --spacing-4xl: 38px;
+    --spacing-5xl: 48px;
+    --spacing-6xl: 58px;
+  }
+}
+
+/* Tablet (768px - 1023px) - Reduce spacing by ~20% */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --spacing-xs: 3px;
+    --spacing-sm: 6px;
+    --spacing-md: 13px;
+    --spacing-lg: 19px;
+    --spacing-xl: 26px;
+    --spacing-2xl: 32px;
+    --spacing-3xl: 38px;
+    --spacing-4xl: 51px;
+    --spacing-5xl: 64px;
+    --spacing-6xl: 77px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Touch-Friendly Interactions
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Ensure all interactive elements meet minimum touch target size
+ * on mobile devices (44x44px minimum, 48x48px comfortable)
+ */
+
+@media (max-width: 767px) {
+  /* Buttons */
+  button,
+  .btn,
+  [role="button"] {
+    min-height: var(--touch-target-min);
+    min-width: var(--touch-target-min);
+    padding: 12px 20px;
+  }
+  
+  /* Links */
+  a {
+    min-height: var(--touch-target-min);
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  /* Form inputs */
+  input,
+  textarea,
+  select {
+    min-height: var(--touch-target-min);
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Checkboxes and radios */
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 24px;
+    min-height: 24px;
+  }
+  
+  /* Icon buttons */
+  .icon-button {
+    min-width: var(--touch-target-comfortable);
+    min-height: var(--touch-target-comfortable);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Display Utilities
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Show/hide elements based on viewport size
+ */
+
+/* Hide on mobile */
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hide-mobile {
+    display: block;
+  }
+}
+
+/* Hide on tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hide-tablet {
+    display: none;
+  }
+}
+
+/* Hide on desktop */
+@media (min-width: 1024px) {
+  .hide-desktop {
+    display: none;
+  }
+}
+
+/* Show only on mobile */
+.show-mobile {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .show-mobile {
+    display: none;
+  }
+}
+
+/* Show only on tablet */
+.show-tablet {
+  display: none;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .show-tablet {
+    display: block;
+  }
+}
+
+/* Show only on desktop */
+.show-desktop {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .show-desktop {
+    display: block;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Flexbox Utilities
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Flexbox utilities that adapt to viewport size
+ */
+
+/* Stack on mobile, row on desktop */
+.flex-stack-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .flex-stack-mobile {
+    flex-direction: row;
+    gap: 24px;
+  }
+}
+
+/* Reverse stack on mobile */
+.flex-stack-mobile-reverse {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .flex-stack-mobile-reverse {
+    flex-direction: row;
+    gap: 24px;
+  }
+}
+
+/* Wrap on mobile */
+.flex-wrap-mobile {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .flex-wrap-mobile {
+    flex-wrap: nowrap;
+    gap: 24px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Text Alignment
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Text alignment that adapts to viewport size
+ */
+
+/* Center on mobile, left on desktop */
+.text-center-mobile {
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .text-center-mobile {
+    text-align: left;
+  }
+}
+
+/* Left on mobile, center on desktop */
+.text-left-mobile {
+  text-align: left;
+}
+
+@media (min-width: 768px) {
+  .text-left-mobile {
+    text-align: center;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Images
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Responsive image utilities
+ */
+
+.img-responsive {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.img-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-contain {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Tables
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Tables that adapt to mobile screens
+ */
+
+@media (max-width: 767px) {
+  .table-responsive {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .table-responsive table {
+    min-width: 600px;
+  }
+  
+  /* Stack table on mobile */
+  .table-stack-mobile {
+    display: block;
+  }
+  
+  .table-stack-mobile thead {
+    display: none;
+  }
+  
+  .table-stack-mobile tbody,
+  .table-stack-mobile tr,
+  .table-stack-mobile td {
+    display: block;
+    width: 100%;
+  }
+  
+  .table-stack-mobile tr {
+    margin-bottom: 16px;
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  
+  .table-stack-mobile td {
+    text-align: left;
+    padding: 8px 0;
+  }
+  
+  .table-stack-mobile td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+    color: var(--color-text-secondary);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Navigation
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Navigation patterns for different screen sizes
+ */
+
+@media (max-width: 767px) {
+  /* Hamburger menu on mobile */
+  .nav-desktop {
+    display: none;
+  }
+  
+  .nav-mobile {
+    display: block;
+  }
+  
+  /* Full-screen mobile menu */
+  .nav-mobile-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--color-white);
+    z-index: 1000;
+    padding: 20px;
+    overflow-y: auto;
+  }
+  
+  [data-theme="dark"] .nav-mobile-menu {
+    background: var(--color-black);
+  }
+}
+
+@media (min-width: 768px) {
+  .nav-desktop {
+    display: block;
+  }
+  
+  .nav-mobile {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Modals
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Modals that adapt to mobile screens
+ */
+
+@media (max-width: 767px) {
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    border-radius: 0;
+    min-height: 100vh;
+  }
+  
+  .modal-fullscreen-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Usage Examples (Documentation)
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * USAGE EXAMPLES:
+ * 
+ * Container:
+ * <div class="container">
+ *   <p>Responsive container with max-width</p>
+ * </div>
+ * 
+ * Grid System:
+ * <div class="grid">
+ *   <div class="col-12 col-tablet-6 col-desktop-4">Column 1</div>
+ *   <div class="col-12 col-tablet-6 col-desktop-4">Column 2</div>
+ *   <div class="col-12 col-tablet-12 col-desktop-4">Column 3</div>
+ * </div>
+ * 
+ * Responsive Display:
+ * <div class="hide-mobile">Only visible on tablet and desktop</div>
+ * <div class="show-mobile">Only visible on mobile</div>
+ * 
+ * Responsive Flexbox:
+ * <div class="flex-stack-mobile">
+ *   <div>Stacks on mobile, row on desktop</div>
+ *   <div>Second item</div>
+ * </div>
+ * 
+ * Responsive Text:
+ * <h1 class="text-center-mobile">Centered on mobile, left on desktop</h1>
+ * 
+ * Responsive Images:
+ * <img src="image.jpg" class="img-responsive" alt="Responsive image" />
+ * 
+ * Responsive Tables:
+ * <div class="table-responsive">
+ *   <table>
+ *     <thead>...</thead>
+ *     <tbody>...</tbody>
+ *   </table>
+ * </div>
+ * 
+ * BREAKPOINTS:
+ * - Mobile: 320px - 767px (single column, touch-friendly)
+ * - Tablet: 768px - 1023px (2-3 columns, hybrid interactions)
+ * - Desktop: 1024px+ (full grid, mouse/keyboard)
+ * - Wide: 1440px+ (max container width)
+ * 
+ * TOUCH TARGETS:
+ * - Minimum: 44x44px (WCAG 2.1 Level AAA)
+ * - Comfortable: 48x48px (Apple recommendation)
+ * - All interactive elements meet minimum on mobile
+ * 
+ * TYPOGRAPHY SCALING:
+ * - Mobile: ~15% smaller than desktop
+ * - Tablet: ~8% smaller than desktop
+ * - Desktop: Full size (base scale)
+ * 
+ * SPACING SCALING:
+ * - Mobile: ~40% smaller than desktop
+ * - Tablet: ~20% smaller than desktop
+ * - Desktop: Full size (4px grid)
+ * 
+ * ACCESSIBILITY:
+ * - Touch targets meet WCAG 2.1 Level AAA
+ * - Font size minimum 16px on inputs (prevents iOS zoom)
+ * - Readable line lengths (45-75 characters)
+ * - Smooth scrolling on touch devices
+ * - Keyboard navigation support on all devices
+ */
+

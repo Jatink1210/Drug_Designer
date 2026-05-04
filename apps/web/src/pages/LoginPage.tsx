@@ -1,72 +1,75 @@
-import React, { useState } from 'react';
-import { useAuth } from '../components/AuthProvider';
-import { Target } from 'lucide-react';
-import { ensureApiBase } from '@/lib/api';
+import React, { useState } from "react";
+import { useAuth } from "../components/AuthProvider";
+import { Target } from "lucide-react";
+import { ensureApiBase } from "@/lib/api";
+import StateWrapper from "@/components/ui/StateWrapper";
+import type { ViewState } from '../lib/types';
 
 export function LoginPage() {
   const { login } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     try {
       const base = await ensureApiBase();
       if (isRegistering) {
         const res = await fetch(`${base}/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password, full_name: fullName }),
+          credentials: "include",
         });
-        if (!res.ok) throw new Error((await res.json()).detail || 'Registration failed');
+        if (!res.ok)
+          throw new Error((await res.json()).detail || "Registration failed");
       }
 
       const params = new URLSearchParams();
-      params.append('username', email);
-      params.append('password', password);
+      params.append("username", email);
+      params.append("password", password);
 
       const res = await fetch(`${base}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: params,
+        credentials: "include",
       });
 
-      if (!res.ok) throw new Error('Invalid credentials');
+      if (!res.ok) throw new Error("Invalid credentials");
       const data = await res.json();
-      
-      const meRes = await fetch(`${base}/auth/me`, {
-        headers: { Authorization: `Bearer ${data.access_token}` }
-      });
-      const userData = await meRes.json();
-      
-      login(data.access_token, userData);
+
+      // Cookie is set by the server; use returned user data directly
+      login(data.user);
     } catch (err: any) {
       setError(err.message);
     }
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-[var(--bg-app)] px-4">
+    <StateWrapper state={"success" as ViewState} moduleName="Login">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--bg-app)] px-4 overflow-y-auto">
       {/* Impeccable constraint: No wrapping "cards" unless necessary. Let it breathe on the background. */}
       <div className="w-full max-w-sm space-y-10">
-        
         <div className="flex flex-col items-center">
-            {/* Minimalist Logo */}
-            <div className="w-12 h-12 mb-6 text-[var(--accent)] flex items-center justify-center border border-[var(--border)] shadow-sm bg-[var(--bg-elevated)] p-2">
-                <Target size={24} strokeWidth={1.5} />
-            </div>
+          {/* Minimalist Logo */}
+          <div className="w-12 h-12 mb-6 text-[var(--accent)] flex items-center justify-center border border-[var(--border)] shadow-sm bg-[var(--bg-elevated)] p-2">
+            <Target size={24} strokeWidth={1.5} />
+          </div>
 
-            <h1 className="text-3xl font-bold tracking-tight text-center text-[var(--accent)]">
-                DrugDesigner
-            </h1>
-            <p className="mt-4 text-center text-sm font-medium text-[var(--text-secondary)] tracking-wide">
-                {isRegistering ? 'Register your instance' : 'Access your workstation'}
-            </p>
+          <h1 className="text-3xl font-bold tracking-tight text-center text-[var(--accent)]">
+            DrugDesigner
+          </h1>
+          <p className="mt-4 text-center text-sm font-medium text-[var(--text-secondary)] tracking-wide">
+            {isRegistering
+              ? "Register your instance"
+              : "Access your workstation"}
+          </p>
         </div>
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
@@ -116,21 +119,22 @@ export function LoginPage() {
               type="submit"
               className="w-full bg-[var(--accent)] text-white py-3 px-4 text-sm font-semibold tracking-wide hover:bg-[var(--accent-hover)] transition-colors"
             >
-              {isRegistering ? 'INITIALIZE' : 'SIGN IN'}
+              {isRegistering ? "INITIALIZE" : "SIGN IN"}
             </button>
           </div>
-          
+
           <div className="text-center pt-6 pb-2">
             <button
               type="button"
               className="text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors uppercase tracking-wider"
               onClick={() => setIsRegistering(!isRegistering)}
             >
-              {isRegistering ? '← Back to Login' : 'Create an Account'}
+              {isRegistering ? "← Back to Login" : "Create an Account"}
             </button>
           </div>
         </form>
       </div>
     </div>
+    </StateWrapper>
   );
 }

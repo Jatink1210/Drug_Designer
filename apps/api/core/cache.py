@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import os
@@ -132,14 +133,87 @@ class SQLiteCache:
 
 
 def cache_key(source: str, query: str, extra: str = "") -> str:
-    """Deterministic cache key from source + query + extra context."""
+    """Deterministic cache key: cache:{source}:{sha256(params)} per §69."""
     raw = "%s:%s:%s" % (source, query, extra)
-    return hashlib.sha256(raw.lower().strip().encode()).hexdigest()
+    digest = hashlib.sha256(raw.lower().strip().encode()).hexdigest()
+    return f"cache:{source}:{digest}"
+
+# §69 TTL tiers
+CACHE_TTL_HTTP = 300        # 5 minutes
+CACHE_TTL_CONNECTOR = 1800  # 30 minutes
+CACHE_TTL_EMBEDDING = 86400 # 24 hours
+CACHE_TTL_GRAPH = 900       # 15 minutes
+
+
+class RedisCache:
+    """Redis-backed application cache tier (§69).
+
+    Sits between L1 (in-memory LRU) and L2 (SQLite disk).
+    Falls back gracefully if Redis is unavailable.
+    """
+
+    def __init__(self, redis_url: str = None):
+        self._redis_url = redis_url
+        self._client = None
+        self._available = False
+        self._init_attempted = False
+
+    def _get_client(self):
+        if self._init_attempted:
+            return self._client
+        self._init_attempted = True
+        try:
+            import redis
+            url = self._redis_url or os.environ.get("REDIS_URL", "redis://localhost:6379/1")
+            self._client = redis.Redis.from_url(url, decode_responses=True, socket_connect_timeout=2)
+            self._client.ping()
+            self._available = True
+            log.info("redis_cache_connected", url=url)
+        except Exception as e:
+            log.info("redis_cache_unavailable", error=str(e))
+            self._client = None
+            self._available = False
+        return self._client
+
+    def get(self, key: str) -> Optional[Any]:
+        client = self._get_client()
+        if not client:
+            return None
+        try:
+            raw = client.get(key)
+            if raw is None:
+                return None
+            return json.loads(raw)
+        except Exception:
+            return None
+
+    def put(self, key: str, data: Any, ttl: float = CACHE_TTL_CONNECTOR) -> None:
+        client = self._get_client()
+        if not client:
+            return
+        try:
+            client.setex(key, int(ttl), json.dumps(data, default=str))
+        except Exception:
+            pass
+
+    def clear(self) -> None:
+        client = self._get_client()
+        if client:
+            try:
+                client.flushdb()
+            except Exception:
+                pass
+
+    @property
+    def available(self) -> bool:
+        self._get_client()
+        return self._available
 
 
 # ── Singletons ────────────────────────────────────────────
 _memory_cache: Optional[LRUCache] = None
 _disk_cache: Optional[SQLiteCache] = None
+_redis_cache: Optional[RedisCache] = None
 
 
 def get_memory_cache() -> LRUCache:
@@ -147,6 +221,13 @@ def get_memory_cache() -> LRUCache:
     if _memory_cache is None:
         _memory_cache = LRUCache()
     return _memory_cache
+
+
+def get_redis_cache() -> RedisCache:
+    global _redis_cache
+    if _redis_cache is None:
+        _redis_cache = RedisCache()
+    return _redis_cache
 
 
 def get_disk_cache() -> SQLiteCache:
@@ -157,16 +238,24 @@ def get_disk_cache() -> SQLiteCache:
 
 
 def two_tier_get(key: str) -> Optional[Any]:
-    """Check memory first, then disk."""
+    """Check memory → Redis → disk (§69 three-tier cache)."""
     mem = get_memory_cache()
     result = mem.get(key)
     if result is not None:
         return result
+    # L2: Redis
+    redis_c = get_redis_cache()
+    result = redis_c.get(key)
+    if result is not None:
+        mem.put(key, result, ttl=300.0)
+        return result
+    # L3: Disk
     disk = get_disk_cache()
     disk_result = disk.get(key)
     if disk_result is not None:
         data, _ = disk_result
-        mem.put(key, data, ttl=300.0)  # promote to memory
+        mem.put(key, data, ttl=300.0)
+        redis_c.put(key, data, ttl=CACHE_TTL_CONNECTOR)
         return data
     return None
 
@@ -175,6 +264,43 @@ def two_tier_put(
     key: str, source: str, url: str, data: Any,
     etag: str = "", ttl: float = DEFAULT_TTL, payload_hash: str = "",
 ) -> None:
-    """Write to both memory and disk."""
+    """Write to all three tiers: memory + Redis + disk."""
     get_memory_cache().put(key, data, ttl=min(ttl, 600.0))
+    get_redis_cache().put(key, data, ttl=ttl)
     get_disk_cache().put(key, source, url, data, etag=etag, ttl=ttl, payload_hash=payload_hash)
+
+
+# ── Async wrappers (safe for event loop) ────────────────
+async def async_two_tier_get(key: str) -> Optional[Any]:
+    """Non-blocking three-tier get: memory → Redis → SQLite."""
+    mem = get_memory_cache()
+    result = mem.get(key)
+    if result is not None:
+        return result
+    # Redis (sync but fast)
+    redis_c = get_redis_cache()
+    result = redis_c.get(key)
+    if result is not None:
+        mem.put(key, result, ttl=300.0)
+        return result
+    # Disk
+    disk_result = await asyncio.to_thread(get_disk_cache().get, key)
+    if disk_result is not None:
+        data, _ = disk_result
+        mem.put(key, data, ttl=300.0)
+        redis_c.put(key, data, ttl=CACHE_TTL_CONNECTOR)
+        return data
+    return None
+
+
+async def async_two_tier_put(
+    key: str, source: str, url: str, data: Any,
+    etag: str = "", ttl: float = DEFAULT_TTL, payload_hash: str = "",
+) -> None:
+    """Non-blocking three-tier put."""
+    get_memory_cache().put(key, data, ttl=min(ttl, 600.0))
+    get_redis_cache().put(key, data, ttl=ttl)
+    await asyncio.to_thread(
+        get_disk_cache().put, key, source, url, data,
+        etag, ttl, payload_hash,
+    )

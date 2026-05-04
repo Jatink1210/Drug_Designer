@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import structlog
 
 from core.http_client import ResilientClient
-from core.cache import cache_key, two_tier_get, two_tier_put
+from core.cache import cache_key, async_two_tier_get, async_two_tier_put
 
 log = structlog.get_logger()
 
@@ -27,12 +27,12 @@ class StructureService:
 
     async def _get(self, url: str) -> Optional[Any]:
         key = cache_key("rcsb_deep", url, "")
-        cached = two_tier_get(key)
+        cached = await async_two_tier_get(key)
         if cached is not None:
             return cached
         body, meta = await self._client.get(url)
         if body is not None:
-            two_tier_put(key, "rcsb", url, body, ttl=172800)
+            await async_two_tier_put(key, "rcsb", url, body, ttl=172800)
         return body
 
     # ── Search ──────────────────────────────────────────
@@ -47,12 +47,12 @@ class StructureService:
             },
         }
         key = cache_key("rcsb_search", query, str(limit))
-        cached = two_tier_get(key)
+        cached = await async_two_tier_get(key)
         if cached is not None:
             return cached
         data, _ = await self._client.post(SEARCH_API, json_body=body)
         if data:
-            two_tier_put(key, "rcsb", SEARCH_API, data, ttl=43200)
+            await async_two_tier_put(key, "rcsb", SEARCH_API, data, ttl=43200)
         return data or {"result_set": [], "total_count": 0}
 
     # ── Full Structure Summary ──────────────────────────
@@ -333,4 +333,59 @@ class StructureService:
                 "cif": entry.get("cifUrl", ""),
                 "pae_json": entry.get("paeDocUrl", ""),
             },
+        }
+
+    # ── ESM → AlphaFold → RCSB Fallback Chain (Req 6.2, 6.5) ──
+    async def get_structure_with_fallback(self, protein_id: str) -> Dict[str, Any]:
+        """Fetch structure using ESM → AlphaFold → RCSB PDB fallback chain.
+
+        Returns structure data with 'source' field indicating which source provided it.
+        """
+        # 1. Try ESM API first
+        try:
+            esm_url = f"https://api.esmatlas.com/fetchPredictedStructure/{protein_id.strip()}"
+            esm_data = await self._get(esm_url)
+            if esm_data:
+                return {
+                    "source": "esm",
+                    "data": esm_data,
+                    "protein_id": protein_id,
+                    "degraded": False,
+                }
+        except Exception as e:
+            log.debug("esm_fetch_failed", protein_id=protein_id, error=str(e))
+
+        # 2. Try AlphaFold
+        try:
+            af_data = await self.get_alphafold(protein_id)
+            if af_data:
+                return {
+                    "source": "alphafold",
+                    "data": af_data,
+                    "protein_id": protein_id,
+                    "degraded": False,
+                }
+        except Exception as e:
+            log.debug("alphafold_fetch_failed", protein_id=protein_id, error=str(e))
+
+        # 3. Try RCSB PDB
+        try:
+            pdb_data = await self.get_structure_summary(protein_id)
+            if pdb_data and "error" not in pdb_data:
+                return {
+                    "source": "rcsb",
+                    "data": pdb_data,
+                    "protein_id": protein_id,
+                    "degraded": True,  # Fell back to RCSB
+                }
+        except Exception as e:
+            log.debug("rcsb_fetch_failed", protein_id=protein_id, error=str(e))
+
+        # All sources failed
+        return {
+            "source": "no_structure_available",
+            "data": None,
+            "protein_id": protein_id,
+            "degraded": True,
+            "error": f"No structure found for {protein_id} from ESM, AlphaFold, or RCSB PDB",
         }

@@ -1,0 +1,462 @@
+{
+  "dashboard": {
+    "title": "Drug Designer - Clinical Workflow Monitoring",
+    "tags": ["drug-designer", "clinical", "workflow", "production"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Clinical Workflow Completion Rate",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0},
+        "description": "Percentage of workflows completing all 10 stages successfully",
+        "targets": [
+          {
+            "expr": "(sum(clinical_workflow_stages_total{stage=\"therapy_stratification\",status=\"success\"}) / sum(clinical_workflow_stages_total{stage=\"ehr_ingestion\",status=\"success\"})) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 80, "color": "yellow"},
+                {"value": 90, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Total Workflows (24h)",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(increase(clinical_workflow_stages_total{stage=\"ehr_ingestion\"}[24h]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "textMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Average Workflow Duration",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0},
+        "description": "Average time to complete full 10-stage pipeline (target: <30min)",
+        "targets": [
+          {
+            "expr": "sum(rate(clinical_workflow_stage_duration_seconds_sum[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count[5m]))",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1200, "color": "yellow"},
+                {"value": 1800, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Workflow Error Rate",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0},
+        "targets": [
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{status=\"error\"}[5m])) / sum(rate(clinical_workflow_stages_total[5m])) * 100",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "textMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "green"},
+                {"value": 1, "color": "yellow"},
+                {"value": 5, "color": "red"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Workflow Stage Throughput",
+        "type": "graph",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 6},
+        "description": "Number of stages completed per minute",
+        "targets": [
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{status=\"success\"}[5m])) by (stage)",
+            "legendFormat": "{{stage}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "ops", "label": "Stages/min"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        }
+      },
+      {
+        "id": 6,
+        "title": "Stage 1: EHR Ingestion",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16},
+        "description": "Latency and success rate for EHR data ingestion (SLA: <5s)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"ehr_ingestion\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{stage=\"ehr_ingestion\",status=\"success\"}[5m])) / sum(rate(clinical_workflow_stages_total{stage=\"ehr_ingestion\"}[5m])) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "percent", "label": "Success Rate %", "max": 100}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 7,
+        "title": "Stage 2: Phenotype Clustering",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 16},
+        "description": "Latency and success rate for phenotype clustering (SLA: <30s)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"phenotype_clustering\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{stage=\"phenotype_clustering\",status=\"success\"}[5m])) / sum(rate(clinical_workflow_stages_total{stage=\"phenotype_clustering\"}[5m])) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "percent", "label": "Success Rate %", "max": 100}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 8,
+        "title": "Stage 3: Tissue Analysis",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16},
+        "description": "Latency and success rate for tissue analysis (SLA: <2min)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"tissue_analysis\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{stage=\"tissue_analysis\",status=\"success\"}[5m])) / sum(rate(clinical_workflow_stages_total{stage=\"tissue_analysis\"}[5m])) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "percent", "label": "Success Rate %", "max": 100}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 9,
+        "title": "Stage 4: Biomarker Quantification",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 24},
+        "description": "Latency and success rate for biomarker quantification (SLA: <30s)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"biomarker_quantification\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{stage=\"biomarker_quantification\",status=\"success\"}[5m])) / sum(rate(clinical_workflow_stages_total{stage=\"biomarker_quantification\"}[5m])) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "percent", "label": "Success Rate %", "max": 100}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 10,
+        "title": "Stage 5: Genomic Sequencing",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 24},
+        "description": "Latency and success rate for genomic sequencing (SLA: <10min WES)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"genomic_sequencing\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{stage=\"genomic_sequencing\",status=\"success\"}[5m])) / sum(rate(clinical_workflow_stages_total{stage=\"genomic_sequencing\"}[5m])) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "percent", "label": "Success Rate %", "max": 100}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 11,
+        "title": "Stage 6: Pathogenicity Prediction",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 24},
+        "description": "Latency and success rate for pathogenicity prediction (SLA: <1min for 1000 variants)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"pathogenicity_prediction\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{stage=\"pathogenicity_prediction\",status=\"success\"}[5m])) / sum(rate(clinical_workflow_stages_total{stage=\"pathogenicity_prediction\"}[5m])) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "percent", "label": "Success Rate %", "max": 100}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 12,
+        "title": "Stage 7: Knowledge Graph Cross-Reference",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 32},
+        "description": "Latency and success rate for knowledge graph queries (SLA: <500ms)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"knowledge_graph\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{stage=\"knowledge_graph\",status=\"success\"}[5m])) / sum(rate(clinical_workflow_stages_total{stage=\"knowledge_graph\"}[5m])) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "percent", "label": "Success Rate %", "max": 100}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 13,
+        "title": "Stage 8: Disruption Modeling",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 32},
+        "description": "Latency and success rate for disruption modeling (SLA: <30s per mutation)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"disruption_modeling\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{stage=\"disruption_modeling\",status=\"success\"}[5m])) / sum(rate(clinical_workflow_stages_total{stage=\"disruption_modeling\"}[5m])) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "percent", "label": "Success Rate %", "max": 100}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 14,
+        "title": "Stage 9: Drug Matching",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 32},
+        "description": "Latency and success rate for drug matching (SLA: <30s)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"drug_matching\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{stage=\"drug_matching\",status=\"success\"}[5m])) / sum(rate(clinical_workflow_stages_total{stage=\"drug_matching\"}[5m])) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "percent", "label": "Success Rate %", "max": 100}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true
+        }
+      },
+      {
+        "id": 15,
+        "title": "Stage 10: Therapy Stratification",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 40},
+        "description": "Latency and success rate for therapy stratification (SLA: <10s)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"therapy_stratification\"}[5m])) by (le))",
+            "legendFormat": "p95 Latency",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(clinical_workflow_stages_total{stage=\"therapy_stratification\",status=\"success\"}[5m])) / sum(rate(clinical_workflow_stages_total{stage=\"therapy_stratification\"}[5m])) * 100",
+            "legendFormat": "Success Rate %",
+            "refId": "B",
+            "yAxisIndex": 1
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency"},
+          {"format": "percent", "label": "Success Rate %", "max": 100}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        }
+      }
+    ]
+  }
+}

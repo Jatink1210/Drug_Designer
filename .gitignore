@@ -1,4 +1,4 @@
-# Python
+# ── Python ──────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -6,33 +6,64 @@ __pycache__/
 venv/
 .pytest_cache/
 .ruff_cache/
+*.pyc
 
-# Node
+# ── Node ────────────────────────────────────────────────────
 node_modules/
 dist/
 .vite/
 
-# Rust
+# ── Rust ────────────────────────────────────────────────────
 target/
 
-# IDE
+# ── IDE ─────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Env
+# ── Environment / Secrets ──────────────────────────────────
 .env
 .env.local
 
-# Data
-data/
+# ── Data / Runtime ─────────────────────────────────────────
 *.db
 *.sqlite3
+apps/api/data/files/*.db
+apps/api/data/video_frames/
 
-# Docker
+# ── Docker ──────────────────────────────────────────────────
 .docker/
 
-# OS
+# ── OS ──────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ── Build / Log Artifacts ──────────────────────────────────
+pip_out.txt
+tsconfig.tsbuildinfo
+*.log
+*.err
+apps/api/scripts/batch_test_results_*.json
+
+# ── Downloads / Archives ───────────────────────────────────
+*.zip
+*.rar
+
+# ── Debug / Test Artifacts ─────────────────────────────────
+q42_*.json
+q42_*.log
+test_output.txt
+
+# ── Video / Media ──────────────────────────────────────────
+*.mp4
+*.avi
+*.mov
+
+# ── Companion Repos / Installers ───────────────────────────
+git repos/
+*.msi
+
+# ── Test Results ───────────────────────────────────────────
+test-results/
+test_results/

@@ -2,88 +2,88 @@
 Security & Tenancy Boundaries Middleware.
 Satisfies Section 22 of the Drug Designer specification by enforcing
 JWT Bearer token validation on all protected API routes.
+Includes RBAC role enforcement (§55.2-55.3) and agent key scoping (§55.4).
 """
 
 import os
-import time
 import hmac
-import hashlib
-import json
-import base64
-from typing import Optional
-from fastapi import Request, HTTPException
+from typing import Optional, Sequence
+from fastapi import Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
-# Secret key - in production this comes from environment variables
-JWT_SECRET = os.environ.get("DRUGDESIGNER_JWT_SECRET", "workbench-dev-secret-key-change-in-production")
-JWT_ALGORITHM = "HS256"
+from core.auth import verify_access_token
 
-# Routes that don't require authentication
+# Routes that don't require authentication (§55.3)
 PUBLIC_ROUTES = {
     "/api/health",
     "/api/health/deep",
+    "/api/v1/auth/login",
+    "/api/v1/auth/register",
+    "/api/v1/auth/refresh",
+    "/api/auth/login",
+    "/api/auth/register",
+    "/api/auth/refresh",
     "/docs",
     "/openapi.json",
     "/redoc",
     "/",
 }
 
-def _base64url_encode(data: bytes) -> str:
-    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("utf-8")
+# §55.2 RBAC role hierarchy (higher includes lower)
+ROLE_HIERARCHY = {
+    "admin": 4,
+    "owner": 3,
+    "collaborator": 2,
+    "viewer": 1,
+    "agent": 2,  # agents = collaborator-level
+}
 
-def _base64url_decode(data: str) -> bytes:
-    padding = 4 - len(data) % 4
-    if padding != 4:
-        data += "=" * padding
-    return base64.urlsafe_b64decode(data)
 
-def create_token(user_id: str, role: str = "researcher", expires_in: int = 86400) -> str:
-    """Generate a signed JWT token for API authentication."""
-    header = {"alg": JWT_ALGORITHM, "typ": "JWT"}
-    payload = {
-        "sub": user_id,
-        "role": role,
-        "iat": int(time.time()),
-        "exp": int(time.time()) + expires_in
-    }
-    
-    header_b64 = _base64url_encode(json.dumps(header).encode())
-    payload_b64 = _base64url_encode(json.dumps(payload).encode())
-    
-    signing_input = f"{header_b64}.{payload_b64}"
-    signature = hmac.new(JWT_SECRET.encode(), signing_input.encode(), hashlib.sha256).digest()
-    signature_b64 = _base64url_encode(signature)
-    
-    return f"{header_b64}.{payload_b64}.{signature_b64}"
+def require_role(*allowed_roles: str):
+    """FastAPI Depends for RBAC enforcement (§55.2-55.3).
 
-def verify_token(token: str) -> Optional[dict]:
-    """Verify and decode a JWT token. Returns payload dict or None."""
-    try:
-        parts = token.split(".")
-        if len(parts) != 3:
-            return None
-            
-        header_b64, payload_b64, signature_b64 = parts
-        
-        # Verify signature
-        signing_input = f"{header_b64}.{payload_b64}"
-        expected_sig = hmac.new(JWT_SECRET.encode(), signing_input.encode(), hashlib.sha256).digest()
-        actual_sig = _base64url_decode(signature_b64)
-        
-        if not hmac.compare_digest(expected_sig, actual_sig):
-            return None
-            
-        # Decode payload
-        payload = json.loads(_base64url_decode(payload_b64))
-        
-        # Check expiration
-        if payload.get("exp", 0) < time.time():
-            return None
-            
-        return payload
-    except Exception:
+    Usage: `Depends(require_role("owner", "admin"))`
+    Validates request.state.user_role against allowed roles.
+    """
+    async def _check(request: Request):
+        role = getattr(request.state, "user_role", None)
+        if not role:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        if role not in allowed_roles and role != "admin":
+            raise HTTPException(
+                status_code=403,
+                detail=f"Role '{role}' insufficient. Required: {', '.join(allowed_roles)}",
+            )
+        return role
+    return _check
+
+
+def verify_agent_api_key(api_key: str) -> Optional[dict]:
+    """Verify Local Agent pre-shared API key (§55.3).
+    Returns agent context dict or None if invalid."""
+    expected_key = os.environ.get("DRUGDESIGNER_AGENT_API_KEY", "")
+    if not expected_key or not api_key:
         return None
+    if hmac.compare_digest(api_key, expected_key):
+        return {"agent": True, "role": "agent"}
+    return None
+
+
+def verify_agent_scope(api_key: str, user_id: str = None, project_id: str = None) -> Optional[dict]:
+    """Verify agent API key is scoped to user + project (§55.4).
+    Format: <key>:<user_id>:<project_id> or just <key> for global agents."""
+    parts = api_key.split(":", 2)
+    base_key = parts[0]
+    ctx = verify_agent_api_key(base_key)
+    if not ctx:
+        return None
+    # If scoped key provided, validate scope
+    if len(parts) == 3:
+        ctx["scoped_user_id"] = parts[1]
+        ctx["scoped_project_id"] = parts[2]
+    return ctx
+
 
 class JWTAuthMiddleware(BaseHTTPMiddleware):
     """
@@ -94,8 +94,8 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
     """
     
     async def dispatch(self, request: Request, call_next):
-        # Check if auth is enabled (disabled by default for local dev)
-        auth_enabled = os.environ.get("DRUGDESIGNER_AUTH_ENABLED", "false").lower() == "true"
+        # Check if auth is enabled (enabled by default per §55.3)
+        auth_enabled = os.environ.get("DRUGDESIGNER_AUTH_ENABLED", "true").lower() == "true"
         
         if not auth_enabled:
             return await call_next(request)
@@ -105,16 +105,35 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         if any(path.startswith(r) for r in PUBLIC_ROUTES):
             return await call_next(request)
         
-        # Extract Bearer token
-        auth_header = request.headers.get("Authorization", "")
-        if not auth_header.startswith("Bearer "):
+        # Extract Bearer token or Agent API key (§55.3)
+        # Primary: HTTP-only cookie (§55.1)
+        token = request.cookies.get("dss_access_token")
+
+        # Check for Local Agent API key (§55.3: X-Agent-Key header)
+        agent_key = request.headers.get("X-Agent-Key", "")
+        if agent_key:
+            agent_ctx = verify_agent_api_key(agent_key)
+            if agent_ctx:
+                request.state.user_id = "agent"
+                request.state.user_role = "agent"
+                return await call_next(request)
             return JSONResponse(
                 status_code=401,
-                content={"detail": "Missing or invalid Authorization header. Expected: Bearer <token>"}
+                content={"detail": "Invalid Agent API key."}
             )
-        
-        token = auth_header[7:]
-        payload = verify_token(token)
+
+        # Fallback: Authorization header for API clients
+        if not token:
+            auth_header = request.headers.get("Authorization", "")
+            if auth_header.startswith("Bearer "):
+                token = auth_header[7:]
+
+        if not token:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Missing authentication. Expected: HTTP-only cookie or Bearer <token>"}
+            )
+        payload = verify_access_token(token)
         
         if payload is None:
             return JSONResponse(

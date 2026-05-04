@@ -10,11 +10,19 @@ NotImplementedError rather than silently succeeding with fake data.
 from typing import Dict, Any, List
 from .base import BaseRuntime
 
+_AIRLLM_IMPORT_OK = False  # True only if `import airllm` succeeded at module load
 try:
     import airllm
     IS_AIRLLM_AVAILABLE = True
-except ImportError:
-    IS_AIRLLM_AVAILABLE = False
+    _AIRLLM_IMPORT_OK = True
+except (ImportError, Exception):
+    # airllm may be installed but fail to import due to dependency issues
+    # (e.g., torchvision incompatibility). Check if the package exists.
+    try:
+        import importlib.util
+        IS_AIRLLM_AVAILABLE = importlib.util.find_spec("airllm") is not None
+    except Exception:
+        IS_AIRLLM_AVAILABLE = False
 
 
 class AirLLMRuntime(BaseRuntime):
@@ -28,6 +36,11 @@ class AirLLMRuntime(BaseRuntime):
         """Lazy-load the AirLLM model on first use."""
         if self._model is not None:
             return self._model
+        if not _AIRLLM_IMPORT_OK:
+            raise RuntimeError(
+                "AirLLM package found but import failed (dependency issue). "
+                "Cannot load models until `import airllm` succeeds."
+            )
         if not IS_AIRLLM_AVAILABLE:
             raise RuntimeError(
                 "AirLLM is not installed. Install with: pip install airllm"

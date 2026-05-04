@@ -1,201 +1,143 @@
-import requests
+import asyncio
 import time
 from typing import Dict, List
-import re
 
-def map_genes_to_uniprot(genes: List[str]) -> Dict[str, str]:
-    """Enhanced gene to UniProt mapping with retry logic and multiple query strategies"""
-    mapping = {}
+import structlog
+
+from core.http_client import ResilientClient
+
+log = structlog.get_logger(__name__)
+
+UNIPROT_BASE = "https://rest.uniprot.org"
+
+
+async def map_genes_to_uniprot(genes: List[str]) -> Dict[str, str]:
+    """Enhanced gene to UniProt mapping with retry logic and multiple query strategies."""
+    mapping: Dict[str, str] = {}
 
     if not genes:
         return mapping
 
-    print(f"  🔗 Mapping {len(genes)} genes to UniProt IDs...")
+    log.info("uniprot_mapper.start", gene_count=len(genes))
+    client = ResilientClient(timeout=40.0)
 
-    # Method 1: UniProt batch mapping (primary gene names)
-    batch_mapping = _uniprot_batch_mapping_enhanced(genes)
-    mapping.update(batch_mapping)
-    
-    print(f"  ✓ Batch mapping found {len(batch_mapping)} UniProt IDs")
+    try:
+        # Method 1: UniProt batch mapping (primary gene names)
+        batch_mapping = await _uniprot_batch_mapping(client, genes)
+        mapping.update(batch_mapping)
+        log.info("uniprot_mapper.batch_done", found=len(batch_mapping))
 
-    # Method 2: Individual lookups for unmapped genes with retry logic
-    unmapped = [g for g in genes if g not in mapping]
-    if unmapped:
-        print(f"  🔄 Retrying individual mapping for {len(unmapped)} genes...")
-        individual_mapping = _uniprot_individual_mapping_enhanced(unmapped[:100])
-        mapping.update(individual_mapping)
-        
-        print(f"  ✓ Individual mapping found {len(individual_mapping)} additional UniProt IDs")
+        # Method 2: Individual lookups for unmapped genes
+        unmapped = [g for g in genes if g not in mapping]
+        if unmapped:
+            individual = await _uniprot_individual_mapping(client, unmapped[:100])
+            mapping.update(individual)
+            log.info("uniprot_mapper.individual_done", found=len(individual))
 
-    # Method 3: Alternative query formats for still unmapped genes
-    still_unmapped = [g for g in genes if g not in mapping]
-    if still_unmapped:
-        print(f"  🔍 Trying alternative query formats for {len(still_unmapped)} genes...")
-        alternative_mapping = _uniprot_alternative_mapping(still_unmapped[:50])
-        mapping.update(alternative_mapping)
-        
-        print(f"  ✓ Alternative mapping found {len(alternative_mapping)} additional UniProt IDs")
+        # Method 3: Alternative query formats for still-unmapped genes
+        still_unmapped = [g for g in genes if g not in mapping]
+        if still_unmapped:
+            alt = await _uniprot_alternative_mapping(client, still_unmapped[:50])
+            mapping.update(alt)
+            log.info("uniprot_mapper.alternative_done", found=len(alt))
+    finally:
+        await client.close()
 
+    log.info("uniprot_mapper.complete", total_mapped=len(mapping), total_genes=len(genes))
     return mapping
 
 
-def _uniprot_batch_mapping_enhanced(genes: List[str]) -> Dict[str, str]:
-    """Enhanced batch mapping with better error handling"""
+async def _uniprot_batch_mapping(client: ResilientClient, genes: List[str]) -> Dict[str, str]:
+    """Batch mapping via UniProt ID-mapping service."""
     try:
-        url = "https://rest.uniprot.org/idmapping/run"
-        data = {
-            'from': 'Gene_Name',
-            'to': 'UniProtKB',
-            'ids': ' '.join(genes[:400])  # Reduce batch size for reliability
-        }
-        
-        response = requests.post(url, data=data, timeout=40)
-        if response.status_code != 200:
-            print(f"  Warning: Batch mapping failed with status {response.status_code}")
+        body, meta = await client.post(
+            f"{UNIPROT_BASE}/idmapping/run",
+            json_body={"from": "Gene_Name", "to": "UniProtKB", "ids": " ".join(genes[:400])},
+        )
+        if body is None:
+            log.warning("uniprot_mapper.batch_submit_failed", meta=meta)
             return {}
 
-        result = response.json()
-        job_id = result.get('jobId')
+        job_id = body.get("jobId")
         if not job_id:
             return {}
 
-        # Wait for job completion with longer timeout
-        status_url = f"https://rest.uniprot.org/idmapping/status/{job_id}"
-        for attempt in range(15):  # Wait up to 45 seconds
-            time.sleep(3)
-            try:
-                status_response = requests.get(status_url, timeout=15)
-                if status_response.status_code != 200:
-                    continue
-                    
-                status_json = status_response.json()
-                job_status = status_json.get('jobStatus')
-                
-                if job_status == 'FINISHED':
-                    break
-                elif job_status == 'ERROR':
-                    print("  Warning: UniProt batch job failed")
-                    return {}
-                elif job_status != 'RUNNING':
-                    continue
-                    
-            except Exception as e:
-                print(f"  Warning: Status check failed (attempt {attempt+1}): {e}")
+        # Poll for completion
+        for attempt in range(15):
+            await asyncio.sleep(3)
+            status_body, _ = await client.get(f"{UNIPROT_BASE}/idmapping/status/{job_id}")
+            if status_body is None:
                 continue
+            job_status = status_body.get("jobStatus")
+            if job_status == "FINISHED":
+                break
+            if job_status == "ERROR":
+                log.warning("uniprot_mapper.batch_job_error", job_id=job_id)
+                return {}
 
-        # Get results
-        results_url = f"https://rest.uniprot.org/idmapping/uniprotkb/results/{job_id}"
-        try:
-            results_response = requests.get(results_url, timeout=40)
-            mapping = {}
-            
-            if results_response.status_code == 200:
-                data = results_response.json()
-                for result in data.get('results', []):
-                    gene = result.get('from')
-                    uniprot_entry = result.get('to', {})
-                    uniprot_id = uniprot_entry.get('primaryAccession')
-                    
-                    if gene and uniprot_id:
-                        mapping[gene] = uniprot_id
-            
-            return mapping
-            
-        except Exception as e:
-            print(f"  Warning: Failed to retrieve batch results: {e}")
-            return {}
+        # Fetch results
+        results_body, _ = await client.get(f"{UNIPROT_BASE}/idmapping/uniprotkb/results/{job_id}")
+        mapping: Dict[str, str] = {}
+        if results_body:
+            for r in results_body.get("results", []):
+                gene = r.get("from")
+                acc = (r.get("to") or {}).get("primaryAccession")
+                if gene and acc:
+                    mapping[gene] = acc
+        return mapping
 
-    except Exception as e:
-        print(f"  Warning: UniProt batch mapping failed: {e}")
+    except Exception as exc:
+        log.warning("uniprot_mapper.batch_error", error=str(exc))
         return {}
 
 
-def _uniprot_individual_mapping_enhanced(genes: List[str]) -> Dict[str, str]:
-    """Enhanced individual mapping with multiple query strategies"""
-    mapping = {}
-    
-    for gene in genes[:50]:  # Limit to prevent timeout
-        for attempt in range(2):  # Reduce attempts but use better queries
-            try:
-                # Try multiple query formats
-                queries = [
-                    f'gene_exact:{gene} AND organism_id:9606',
-                    f'gene:{gene} AND organism_id:9606',
-                    f'(gene_exact:{gene} OR gene_synonym:{gene}) AND organism_id:9606'
-                ]
-                
-                for query in queries:
-                    url = "https://rest.uniprot.org/uniprotkb/search"
-                    params = {
-                        'query': query,
-                        'fields': 'accession,gene_primary,gene_synonym',
-                        'format': 'json',
-                        'size': 1
-                    }
-                    
-                    response = requests.get(url, params=params, timeout=25)
-                    if response.status_code == 200:
-                        data = response.json()
-                        if data.get('results'):
-                            uniprot_id = data['results'][0].get('primaryAccession')
-                            if uniprot_id:
-                                mapping[gene] = uniprot_id
-                                break
-                    
-                    time.sleep(0.3)  # Rate limiting between queries
-                
-                if gene in mapping:
+async def _uniprot_individual_mapping(client: ResilientClient, genes: List[str]) -> Dict[str, str]:
+    """Individual search queries per gene."""
+    mapping: Dict[str, str] = {}
+
+    for gene in genes[:50]:
+        queries = [
+            f"gene_exact:{gene} AND organism_id:9606",
+            f"gene:{gene} AND organism_id:9606",
+            f"(gene_exact:{gene} OR gene_synonym:{gene}) AND organism_id:9606",
+        ]
+        for query in queries:
+            body, _ = await client.get(
+                f"{UNIPROT_BASE}/uniprotkb/search",
+                params={"query": query, "fields": "accession,gene_primary,gene_synonym", "format": "json", "size": "1"},
+            )
+            if body and body.get("results"):
+                acc = body["results"][0].get("primaryAccession")
+                if acc:
+                    mapping[gene] = acc
                     break
-                    
-            except Exception as e:
-                if attempt == 0:  # Only print warning on first attempt
-                    print(f"  Warning: Failed to map gene {gene} (attempt {attempt+1}): {e}")
-                time.sleep(2 * (attempt + 1))
-        
-        time.sleep(0.5)  # Rate limit between genes
-    
+            await asyncio.sleep(0.3)
+        await asyncio.sleep(0.5)
+
     return mapping
 
 
-def _uniprot_alternative_mapping(genes: List[str]) -> Dict[str, str]:
-    """Try mapping using alternative query formats and protein names"""
-    mapping = {}
-    
-    for gene in genes[:30]:  # Further limit for alternative mapping
-        try:
-            # Try different search strategies
-            queries = [
-                f'(gene:{gene} OR protein_name:{gene}) AND organism_id:9606',
-                f'gene_synonym:{gene} AND organism_id:9606',
-                f'(gene_names:{gene} OR gene_oln:{gene}) AND organism_id:9606'
-            ]
-            
-            for query in queries:
-                url = "https://rest.uniprot.org/uniprotkb/search"
-                params = {
-                    'query': query,
-                    'fields': 'accession,gene_primary,protein_name',
-                    'format': 'json',
-                    'size': 1
-                }
-                
-                response = requests.get(url, params=params, timeout=20)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get('results'):
-                        uniprot_id = data['results'][0].get('primaryAccession')
-                        if uniprot_id:
-                            mapping[gene] = uniprot_id
-                            break
-                
-                time.sleep(0.4)
-            
-            if gene in mapping:
-                continue
-                
-        except Exception:
-            continue
-        
-        time.sleep(0.2)
-    
+async def _uniprot_alternative_mapping(client: ResilientClient, genes: List[str]) -> Dict[str, str]:
+    """Try mapping using alternative query formats and protein names."""
+    mapping: Dict[str, str] = {}
+
+    for gene in genes[:30]:
+        queries = [
+            f"(gene:{gene} OR protein_name:{gene}) AND organism_id:9606",
+            f"gene_synonym:{gene} AND organism_id:9606",
+            f"(gene_names:{gene} OR gene_oln:{gene}) AND organism_id:9606",
+        ]
+        for query in queries:
+            body, _ = await client.get(
+                f"{UNIPROT_BASE}/uniprotkb/search",
+                params={"query": query, "fields": "accession,gene_primary,protein_name", "format": "json", "size": "1"},
+            )
+            if body and body.get("results"):
+                acc = body["results"][0].get("primaryAccession")
+                if acc:
+                    mapping[gene] = acc
+                    break
+            await asyncio.sleep(0.4)
+        await asyncio.sleep(0.2)
+
     return mapping

@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from typing import Tuple
 
+from services.query_classifier import classify_query
+
 # Intent categories
 INTENTS = [
     "protein", "gene", "molecule", "drug", "disease", "pathway",
@@ -52,6 +54,54 @@ _PDB_PATTERN = re.compile(r"\b[0-9][A-Za-z0-9]{3}\b")
 _NCT_PATTERN = re.compile(r"\bNCT\d{8}\b", re.I)
 
 
+def _matches_keyword(q_lower: str, keyword: str) -> bool:
+    """Match keywords on token boundaries to avoid substring false positives.
+
+    Example: "gene" must not match "genetics".
+    """
+    pattern = r"\b" + re.escape(keyword).replace(r"\ ", r"\s+") + r"\b"
+    return re.search(pattern, q_lower, re.IGNORECASE) is not None
+
+
+def _build_search_term(query: str, intent: str) -> str:
+    """Prefer classifier-derived canonical terms over raw long-form prompts."""
+    classification = classify_query(query)
+
+    if intent == "pathway" and classification.pathways:
+        return classification.pathways[0]
+
+    if intent in {"protein", "gene"}:
+        if classification.genes:
+            return " ".join(classification.genes[:2])
+        if classification.disease:
+            return classification.disease
+
+    if intent in {"disease", "clinical_trial", "publication", "general"}:
+        if classification.disease:
+            return classification.disease
+        if classification.genes:
+            return " ".join(classification.genes[:2])
+        if classification.pathways:
+            return classification.pathways[0]
+
+    if intent in {"drug", "molecule"} and classification.search_terms:
+        return classification.search_terms[0]
+
+    return _clean_term(query)
+
+
+def _intent_from_classification(query: str) -> Tuple[str, str] | None:
+    """Fallback intent/term when keyword rules do not produce a confident route."""
+    classification = classify_query(query)
+    if classification.pathways:
+        return "pathway", classification.pathways[0]
+    if classification.genes:
+        return "gene", " ".join(classification.genes[:2])
+    if classification.disease:
+        return "disease", classification.disease
+    return None
+
+
 def detect_intent(query: str) -> Tuple[str, str, str]:
     """Classify query intent and extract search term.
 
@@ -69,24 +119,29 @@ def detect_intent(query: str) -> Tuple[str, str, str]:
 
     # Phrase priority matching
     for intent, phrases in _PHRASE_PRIORITY:
-        if any(p in q_lower for p in phrases):
-            return intent, _clean_term(query), "phrase"
+        if any(_matches_keyword(q_lower, p) for p in phrases):
+            return intent, _build_search_term(query, intent), "phrase"
 
     # Scored keyword matching
     scores: dict[str, float] = {}
     for intent, keywords in _RULES:
         score = 0.0
         for kw in keywords:
-            if kw in q_lower:
+            if _matches_keyword(q_lower, kw):
                 score += 2.0 if " " in kw else 1.0
         if score > 0:
             scores[intent] = score
 
     if scores:
         best = max(scores, key=scores.get)  # type: ignore
-        return best, _clean_term(query), "keyword"
+        return best, _build_search_term(query, best), "keyword"
 
-    return "general", query.strip(), "fallback"
+    structured = _intent_from_classification(query)
+    if structured is not None:
+        intent, search_term = structured
+        return intent, search_term, "structured"
+
+    return "general", _clean_term(query), "fallback"
 
 
 _NOISE_WORDS = {
@@ -98,6 +153,7 @@ _NOISE_WORDS = {
 
 def _clean_term(query: str) -> str:
     """Strip noise words from query to extract the core search term."""
-    tokens = query.strip().split()
+    trimmed = re.split(r"\b(?:then|while|where|showing|including|highlighting)\b", query.strip(), maxsplit=1, flags=re.IGNORECASE)[0]
+    tokens = trimmed.split()
     cleaned = [t for t in tokens if t.lower().rstrip("?.,!") not in _NOISE_WORDS]
-    return " ".join(cleaned) if cleaned else query.strip()
+    return " ".join(cleaned) if cleaned else trimmed or query.strip()

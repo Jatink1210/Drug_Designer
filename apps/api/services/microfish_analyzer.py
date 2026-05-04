@@ -35,14 +35,53 @@ class MicrofishAnalyzer:
 
     def analyze_smiles(self, smiles: str) -> Dict[str, Any]:
         """
-        Computes small molecule properties.
+        Computes small molecule properties using RDKit for real Lipinski Rule of Five.
         """
-        return {
-            "smiles": smiles,
-            "rule_of_five_pass": len(smiles) < 100, # Mock rule
-            "heavy_atoms": len([c for c in smiles if c.isupper() and c not in 'H']),
-            "microfish_confidence": 0.90
-        }
+        try:
+            from rdkit import Chem
+            from rdkit.Chem import Descriptors
+
+            mol = Chem.MolFromSmiles(smiles)
+            if mol is None:
+                return {
+                    "smiles": smiles,
+                    "error": "invalid_smiles",
+                    "rule_of_five_pass": False,
+                    "microfish_confidence": 0.0,
+                }
+
+            mw = Descriptors.MolWt(mol)
+            logp = Descriptors.MolLogP(mol)
+            hbd = Descriptors.NumHDonors(mol)
+            hba = Descriptors.NumHAcceptors(mol)
+
+            violations = sum([
+                mw > 500,
+                logp > 5,
+                hbd > 5,
+                hba > 10,
+            ])
+
+            return {
+                "smiles": smiles,
+                "molecular_weight": round(mw, 2),
+                "logp": round(logp, 2),
+                "h_bond_donors": hbd,
+                "h_bond_acceptors": hba,
+                "ro5_violations": violations,
+                "rule_of_five_pass": violations <= 1,
+                "heavy_atoms": mol.GetNumHeavyAtoms(),
+                "microfish_confidence": 0.99,
+            }
+        except ImportError:
+            logger.warning("RDKit not installed — falling back to heuristic SMILES analysis")
+            return {
+                "smiles": smiles,
+                "rule_of_five_pass": False,
+                "error": "rdkit_not_available",
+                "heavy_atoms": len([c for c in smiles if c.isupper() and c not in 'H']),
+                "microfish_confidence": 0.0,
+            }
 
 # Global instance
 analyzer = MicrofishAnalyzer()

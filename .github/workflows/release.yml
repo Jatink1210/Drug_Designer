@@ -192,6 +192,58 @@ jobs:
             done
           fi
 
+  # ── I2: Generate SBOM and SHA256 checksums ──────────────────────────────────
+  sbom-and-checksums:
+    name: SBOM & SHA256 Checksums
+    needs: build-tauri
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Syft (SBOM generator)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Generate SBOM (SPDX JSON)
+        run: |
+          syft . -o spdx-json=sbom.json
+          echo "SBOM generated: $(wc -c < sbom.json) bytes"
+
+      - name: Upload SBOM to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" sbom.json --clobber
+
+      - name: Download all release assets for checksumming
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p release-assets
+          gh release download "${{ github.ref_name }}" --dir release-assets --pattern "*.deb" || true
+          gh release download "${{ github.ref_name }}" --dir release-assets --pattern "*.AppImage" || true
+          gh release download "${{ github.ref_name }}" --dir release-assets --pattern "*.dmg" || true
+          gh release download "${{ github.ref_name }}" --dir release-assets --pattern "*.msi" || true
+          gh release download "${{ github.ref_name }}" --dir release-assets --pattern "*.exe" || true
+          cp sbom.json release-assets/
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd release-assets
+          sha256sum * > SHA256SUMS.txt
+          echo "=== SHA256 Checksums ==="
+          cat SHA256SUMS.txt
+
+      - name: Upload SHA256SUMS to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.ref_name }}" release-assets/SHA256SUMS.txt --clobber
+
       # ── macOS: Build .pkg from .app using pkgbuild ──
       - name: Build macOS .pkg installer
         if: matrix.target == 'macos'

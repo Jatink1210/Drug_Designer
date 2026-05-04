@@ -1,0 +1,262 @@
+# Drug Designer - Prometheus Alert Rules
+# Task 15.1: Comprehensive Grafana Dashboards with Automatic Alerts
+# NFR-MAIN-002: Monitoring & Observability
+
+groups:
+  - name: drug_designer_sla_violations
+    interval: 1m
+    rules:
+      # API SLA Violations
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, sum(rate(api_request_duration_seconds_bucket[5m])) by (endpoint, le)) > 30
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High API latency detected"
+          description: "API endpoint {{ $labels.endpoint }} has p95 latency of {{ $value }}s (threshold: 30s)"
+
+      - alert: HighErrorRate
+        expr: (sum(rate(api_requests_total{status=~"5.."}[5m])) / sum(rate(api_requests_total[5m]))) * 100 > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "High API error rate"
+          description: "API error rate is {{ $value }}% (threshold: 0.1%)"
+
+      - alert: SLAViolation
+        expr: |
+          (
+            (sum(rate(api_request_duration_seconds_bucket{endpoint=~"/api/auth.*|/api/health",le="0.2"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~"/api/auth.*|/api/health"}[5m]))) < 0.95
+            or
+            (sum(rate(api_request_duration_seconds_bucket{endpoint=~"/api/evidence.*",le="2"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~"/api/evidence.*"}[5m]))) < 0.95
+            or
+            (sum(rate(api_request_duration_seconds_bucket{endpoint=~"/api/disease.*",le="30"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~"/api/disease.*"}[5m]))) < 0.95
+            or
+            (sum(rate(api_request_duration_seconds_bucket{endpoint=~"/api/targets.*",le="15"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~"/api/targets.*"}[5m]))) < 0.95
+            or
+            (sum(rate(api_request_duration_seconds_bucket{endpoint=~"/api/graph.*",le="1"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~"/api/graph.*"}[5m]))) < 0.95
+          )
+        for: 10m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "SLA violation detected"
+          description: "Less than 95% of requests are meeting SLA targets"
+
+  - name: drug_designer_connector_health
+    interval: 1m
+    rules:
+      # Connector Health
+      - alert: ConnectorCircuitBreakerOpen
+        expr: connector_circuit_breaker_state == 1
+        for: 5m
+        labels:
+          severity: warning
+          component: connector
+        annotations:
+          summary: "Connector circuit breaker open"
+          description: "Circuit breaker for connector {{ $labels.connector }} is open"
+
+      - alert: SlowConnector
+        expr: histogram_quantile(0.95, sum(rate(connector_request_duration_seconds_bucket[5m])) by (connector, le)) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: connector
+        annotations:
+          summary: "Slow connector detected"
+          description: "Connector {{ $labels.connector }} has p95 latency of {{ $value }}s (threshold: 10s)"
+
+      - alert: LowConnectorUptime
+        expr: (count(rate(connector_requests_total{status="success"}[24h]) > 0) / count(rate(connector_requests_total[24h]) > 0)) * 100 < 90
+        for: 10m
+        labels:
+          severity: critical
+          component: connector
+        annotations:
+          summary: "Low connector uptime"
+          description: "Only {{ $value }}% of connectors are operational (threshold: 90%)"
+
+      - alert: HighConnectorErrorRate
+        expr: (sum(rate(connector_requests_total{status!="success"}[5m])) / sum(rate(connector_requests_total[5m]))) * 100 > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: connector
+        annotations:
+          summary: "High connector error rate"
+          description: "Connector error rate is {{ $value }}% (threshold: 10%)"
+
+  - name: drug_designer_clinical_workflow
+    interval: 1m
+    rules:
+      # Clinical Workflow SLA
+      - alert: ClinicalWorkflowSLAViolation
+        expr: |
+          (
+            (sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage="ehr_ingestion",le="5"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage="ehr_ingestion"}[5m]))) < 0.95
+            or
+            (sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage="phenotype_clustering",le="30"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage="phenotype_clustering"}[5m]))) < 0.95
+            or
+            (sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage="tissue_analysis",le="120"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage="tissue_analysis"}[5m]))) < 0.95
+            or
+            (sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage="pathogenicity_prediction",le="60"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage="pathogenicity_prediction"}[5m]))) < 0.95
+          )
+        for: 10m
+        labels:
+          severity: warning
+          component: clinical_workflow
+        annotations:
+          summary: "Clinical workflow SLA violation"
+          description: "Clinical workflow stage is not meeting SLA targets"
+
+      - alert: HighClinicalWorkflowErrorRate
+        expr: (sum(rate(clinical_workflow_stages_total{status="error"}[5m])) / sum(rate(clinical_workflow_stages_total[5m]))) * 100 > 5
+        for: 5m
+        labels:
+          severity: critical
+          component: clinical_workflow
+        annotations:
+          summary: "High clinical workflow error rate"
+          description: "Clinical workflow error rate is {{ $value }}% (threshold: 5%)"
+
+  - name: drug_designer_database
+    interval: 1m
+    rules:
+      # Database Health
+      - alert: DatabaseConnectionPoolExhaustion
+        expr: (db_connection_pool_usage / db_connection_pool_size) > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Database connection pool usage is {{ $value | humanizePercentage }} (threshold: 90%)"
+
+      - alert: SlowDatabaseQuery
+        expr: histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket[5m])) by (operation, le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Database operation {{ $labels.operation }} has p95 latency of {{ $value }}s (threshold: 1s)"
+
+      - alert: HighDatabaseErrorRate
+        expr: sum(rate(db_errors_total[5m])) > 1
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "High database error rate"
+          description: "Database errors occurring at {{ $value }} errors/sec"
+
+  - name: drug_designer_models
+    interval: 1m
+    rules:
+      # Model Inference
+      - alert: SlowModelInference
+        expr: histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket[5m])) by (model_name, le)) > 60
+        for: 5m
+        labels:
+          severity: warning
+          component: ml_model
+        annotations:
+          summary: "Slow model inference detected"
+          description: "Model {{ $labels.model_name }} has p95 inference latency of {{ $value }}s (threshold: 60s)"
+
+      - alert: HighModelErrorRate
+        expr: sum(rate(model_errors_total[5m])) by (model_name) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: ml_model
+        annotations:
+          summary: "High model error rate"
+          description: "Model {{ $labels.model_name }} has {{ $value }} errors/sec"
+
+      - alert: HighModelMemoryUsage
+        expr: model_memory_usage_bytes > 16000000000
+        for: 5m
+        labels:
+          severity: warning
+          component: ml_model
+        annotations:
+          summary: "High model memory usage"
+          description: "Model {{ $labels.model_name }} is using {{ $value | humanize }}B of memory (threshold: 16GB)"
+
+  - name: drug_designer_system
+    interval: 1m
+    rules:
+      # System Health
+      - alert: ServiceDown
+        expr: up{job=~"drug-designer-api|postgres|redis|qdrant|neo4j|minio"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Service is down"
+          description: "Service {{ $labels.job }} is down"
+
+      - alert: HighMemoryUsage
+        expr: (process_resident_memory_bytes{job="drug-designer-api"} / 2000000000) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High memory usage"
+          description: "API server memory usage is {{ $value | humanizePercentage }} (threshold: 90% of 2GB)"
+
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total{job="drug-designer-api"}[5m]) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage"
+          description: "API server CPU usage is {{ $value | humanizePercentage }}"
+
+      - alert: LowCacheHitRate
+        expr: (sum(rate(cache_hits_total[5m])) / (sum(rate(cache_hits_total[5m])) + sum(rate(cache_misses_total[5m])))) * 100 < 50
+        for: 10m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value }}% (threshold: 50%)"
+
+  - name: drug_designer_websocket
+    interval: 1m
+    rules:
+      # WebSocket Health
+      - alert: HighWebSocketConnections
+        expr: websocket_connections_active > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: websocket
+        annotations:
+          summary: "High WebSocket connection count"
+          description: "{{ $value }} active WebSocket connections (threshold: 1000)"
+
+      - alert: WebSocketMessageBacklog
+        expr: rate(websocket_messages_sent_total[5m]) < rate(websocket_messages_received_total[5m]) * 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: websocket
+        annotations:
+          summary: "WebSocket message backlog detected"
+          description: "WebSocket messages are not being sent at expected rate"

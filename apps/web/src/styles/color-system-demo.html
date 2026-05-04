@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binary Color System Demo - Drug Designer</title>
+  <link rel="stylesheet" href="./typography.css">
+  <link rel="stylesheet" href="./colors.css">
+  <link rel="stylesheet" href="./themes.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .demo-header {
+      position: sticky;
+      top: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: saturate(180%) blur(20px);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .demo-title {
+      color: #f5f5f7;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    
+    .demo-card {
+      background: var(--color-bg-card);
+      border-radius: 8px;
+      padding: 24px;
+      margin: 20px 0;
+      box-shadow: var(--shadow-md);
+    }
+    
+    .demo-button {
+      background: var(--color-apple-blue);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 17px;
+      cursor: pointer;
+      margin: 8px;
+    }
+    
+    .demo-button:hover {
+      background: var(--color-apple-blue-hover);
+    }
+    
+    .demo-link {
+      display: inline-block;
+      margin: 8px;
+    }
+    
+    .color-swatch {
+      display: inline-block;
+      width: 100px;
+      height: 100px;
+      border-radius: 8px;
+      margin: 8px;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .swatch-black { background: #000000; }
+    .swatch-light-gray { background: #f5f5f7; }
+    .swatch-apple-blue { background: #0071e3; }
+    .swatch-success { background: #34c759; }
+    .swatch-warning { background: #ff9500; }
+    .swatch-error { background: #ff3b30; }
+  </style>
+</head>
+<body>
+  <!-- Glass Navigation -->
+  <header class="demo-header">
+    <div class="demo-title">Binary Color System Demo</div>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+      <span class="theme-toggle-icon" id="themeIcon">☀️</span>
+    </button>
+  </header>
+
+  <!-- Hero Section (Black) -->
+  <section class="section-hero">
+    <div class="container">
+      <h1 style="font-size: 56px; font-weight: 600; margin-bottom: 24px;">Disease Intelligence</h1>
+      <p style="font-size: 21px; margin-bottom: 32px; opacity: 0.8;">Pure Black (#000000) Hero Section</p>
+      <button class="demo-button">Analyze Disease</button>
+    </div>
+  </section>
+
+  <!-- Section 1 (Light Gray) -->
+  <section class="section-cinematic">
+    <div class="container">
+      <h2 style="font-size: 40px; font-weight: 600; margin-bottom: 24px;">Color Palette</h2>
+      <p style="font-size: 17px; margin-bottom: 32px;">Light Gray (#f5f5f7) Informational Section</p>
+      
+      <div class="demo-card">
+        <h3 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">Primary Colors</h3>
+        <div>
+          <div class="color-swatch swatch-black"></div>
+          <div class="color-swatch swatch-light-gray" style="border: 1px solid #d2d2d7;"></div>
+          <div class="color-swatch swatch-apple-blue"></div>
+        </div>
+        <p style="margin-top: 16px;">Pure Black • Light Gray • Apple Blue</p>
+      </div>
+      
+      <div class="demo-card">
+        <h3 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">Semantic Colors</h3>
+        <div>
+          <div class="color-swatch swatch-success"></div>
+          <div class="color-swatch swatch-warning"></div>
+          <div class="color-swatch swatch-error"></div>
+        </div>
+        <p style="margin-top: 16px;">Success Green • Warning Orange • Error Red</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2 (Black) -->
+  <section class="section-cinematic">
+    <div class="container">
+      <h2 style="font-size: 40px; font-weight: 600; margin-bottom: 24px;">Interactive Elements</h2>
+      <p style="font-size: 17px; margin-bottom: 32px;">Pure Black (#000000) Immersive Section</p>
+      
+      <div>
+        <button class="demo-button">Primary Button</button>
+        <button class="demo-button" style="background: transparent; border: 1px solid var(--color-apple-blue);">Secondary Button</button>
+      </div>
+      
+      <div style="margin-top: 24px;">
+        <a href="#" class="demo-link">Learn more →</a>
+        <a href="#" class="demo-link">Explore graph →</a>
+        <a href="#" class="demo-link">View details →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 3 (Light Gray) -->
+  <section class="section-cinematic">
+    <div class="container">
+      <h2 style="font-size: 40px; font-weight: 600; margin-bottom: 24px;">Accessibility Features</h2>
+      <p style="font-size: 17px; margin-bottom: 32px;">Light Gray (#f5f5f7) Informational Section</p>
+      
+      <div class="demo-card">
+        <h3 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">WCAG AA Compliance</h3>
+        <ul style="list-style: none; padding: 0;">
+          <li style="margin: 12px 0;">✓ Near Black on Light Gray: 15.8:1 contrast</li>
+          <li style="margin: 12px 0;">✓ Light Gray on Black: 15.3:1 contrast</li>
+          <li style="margin: 12px 0;">✓ Apple Blue on White: 4.5:1 contrast</li>
+          <li style="margin: 12px 0;">✓ Apple Blue on Black: 5.1:1 contrast</li>
+        </ul>
+      </div>
+      
+      <div class="demo-card">
+        <h3 style="font-size: 24px; font-weight: 600; margin-bottom: 16px;">Semantic Indicators</h3>
+        <p class="text-success status-success" style="margin: 12px 0;">Success message with icon</p>
+        <p class="text-warning status-warning" style="margin: 12px 0;">Warning message with icon</p>
+        <p class="text-error status-error" style="margin: 12px 0;">Error message with icon</p>
+        <p class="text-info status-info" style="margin: 12px 0;">Info message with icon</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4 (Black) -->
+  <section class="section-cinematic section-compact">
+    <div class="container">
+      <h2 style="font-size: 40px; font-weight: 600; margin-bottom: 24px;">Design Principles</h2>
+      <p style="font-size: 17px; margin-bottom: 32px;">Pure Black (#000000) Compact Section</p>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px;">
+        <div>
+          <h4 style="font-size: 21px; font-weight: 600; margin-bottom: 12px;">No Gradients</h4>
+          <p style="opacity: 0.8;">Solid colors only for cinematic impact</p>
+        </div>
+        <div>
+          <h4 style="font-size: 21px; font-weight: 600; margin-bottom: 12px;">No Textures</h4>
+          <p style="opacity: 0.8;">Clean, minimal surfaces throughout</p>
+        </div>
+        <div>
+          <h4 style="font-size: 21px; font-weight: 600; margin-bottom: 12px;">Binary Rhythm</h4>
+          <p style="opacity: 0.8;">Black → Light Gray alternation</p>
+        </div>
+        <div>
+          <h4 style="font-size: 21px; font-weight: 600; margin-bottom: 12px;">Single Accent</h4>
+          <p style="opacity: 0.8;">Apple Blue for all interactions</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Theme toggle functionality
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme') || 'light';
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      
+      // Update icon
+      const icon = document.getElementById('themeIcon');
+      icon.textContent = newTheme === 'light' ? '☀️' : '🌙';
+    }
+    
+    // Load saved theme on page load
+    function loadTheme() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.getElementById('themeIcon').textContent = savedTheme === 'light' ? '☀️' : '🌙';
+      } else {
+        // Use system preference if no saved theme
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = prefersDark ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        document.getElementById('themeIcon').textContent = theme === 'light' ? '☀️' : '🌙';
+      }
+    }
+    
+    // Initialize on page load
+    loadTheme();
+    
+    // Listen for system preference changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      if (!localStorage.getItem('theme')) {
+        const theme = e.matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        document.getElementById('themeIcon').textContent = theme === 'light' ? '☀️' : '🌙';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 from .airllm import IS_AIRLLM_AVAILABLE, AirLLMRuntime
 from .llama_cpp import LlamaCppRuntime
 from .remote_openai import RemoteOpenAIRuntime
+from .policy import default_model_name, default_runtime_id, get_remote_base_url, get_runtime_policy
 from .base import BaseRuntime
 
 log = logging.getLogger(__name__)
@@ -62,11 +63,12 @@ class RuntimeSelector:
     @classmethod
     def get_available_runtimes(cls) -> List[Dict[str, Any]]:
         """List all supported runtimes."""
+        policy = get_runtime_policy()
         return [
             {
                 "id": "llama.cpp",
                 "name": "Local Llama.cpp / Ollama",
-                "status": "ready",
+                "status": "ready" if policy["local_backends_allowed"] else "optional",
                 "capabilities": ["chat", "embeddings", "local", "cpu", "gpu"],
             },
             {
@@ -74,12 +76,12 @@ class RuntimeSelector:
                 "name": "AirLLM (Massive Models)",
                 "status": "not_implemented" if IS_AIRLLM_AVAILABLE else "not_installed",
                 "capabilities": ["local", "split_layer_inference"],
-                "note": "AirLLM package detected but chat/embedding interfaces are not yet integrated.",
+                "note": "AirLLM remains opt-in only and is not the default shipped runtime.",
             },
             {
                 "id": "remote",
                 "name": "Remote Server (OpenAI Compatible)",
-                "status": "ready",
+                "status": "ready" if policy["hosted_runtime_configured"] else "degraded",
                 "capabilities": ["chat", "embeddings", "remote"],
             },
         ]
@@ -100,9 +102,9 @@ class RuntimeSelector:
             except Exception:
                 log.debug("Could not read runtime config file")
         return {
-            "runtime_id": "llama.cpp",
-            "model_name": "",
-            "endpoint": "",
+            "runtime_id": default_runtime_id(),
+            "model_name": default_model_name(),
+            "endpoint": get_remote_base_url() if default_runtime_id() == "remote" else "",
             "compute_mode": "auto",
         }
 
@@ -157,15 +159,20 @@ class RuntimeSelector:
         elif runtime_id == "airllm":
             return AirLLMRuntime(model_repo=model_name)
         elif runtime_id == "remote":
-            ep = endpoint or "https://api.openai.com/v1"
+            ep = endpoint or get_remote_base_url()
             key = api_key or settings.openai_api_key
             model = model_name or settings.openai_model
             return RemoteOpenAIRuntime(base_url=ep, api_key=key, model=model)
         else:
-            log.warning("Unknown runtime %s, defaulting to llama.cpp", runtime_id)
-            return LlamaCppRuntime(
-                endpoint=settings.ollama_host, model=settings.ollama_model
-            )
+            fallback_runtime = default_runtime_id()
+            log.warning("Unknown runtime %s, defaulting to %s", runtime_id, fallback_runtime)
+            if fallback_runtime == "remote":
+                return RemoteOpenAIRuntime(
+                    base_url=get_remote_base_url(),
+                    api_key=settings.openai_api_key,
+                    model=settings.openai_model,
+                )
+            return LlamaCppRuntime(endpoint=settings.ollama_host, model=settings.ollama_model)
 
     @classmethod
     def get_active_runtime(cls) -> BaseRuntime:
@@ -189,7 +196,7 @@ class RuntimeSelector:
     def get_active_runtime_id(cls) -> str:
         """Return the ID of the active runtime from persisted config."""
         config = cls._load_config()
-        return config.get("runtime_id", "llama.cpp")
+        return config.get("runtime_id", default_runtime_id())
 
     @classmethod
     def get_compute_mode(cls) -> str:

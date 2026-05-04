@@ -9,12 +9,14 @@ import time
 import uuid
 from typing import Any, Dict, List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Request
+from routers.auth import get_current_user
 from pydantic import BaseModel, Field
 
 from config import settings
+from models.envelope import build_envelope
 
-router = APIRouter(prefix="/api/reports", tags=["reports"])
+router = APIRouter(prefix="/api/v1/reports", tags=["reports"], dependencies=[Depends(get_current_user)])
 log = logging.getLogger(__name__)
 
 
@@ -31,7 +33,7 @@ class ReportRequest(BaseModel):
 
 
 @router.post("/generate")
-async def generate_report(req: ReportRequest) -> Dict[str, Any]:
+async def generate_report(req: ReportRequest, request: Request) -> Dict[str, Any]:
     """Generate a structured HTML/JSON report."""
     report_id = str(uuid.uuid4())[:8]
     reports_dir = os.path.join(settings.local_store_path, "reports")
@@ -108,20 +110,20 @@ async def generate_report(req: ReportRequest) -> Dict[str, Any]:
     with open(os.path.join(reports_dir, "%s.html" % report_id), "w") as f:
         f.write(html)
 
-    return {
+    return build_envelope(request, {
         "report_id": report_id,
         "status": "generated",
         "sections": list(report["sections"].keys()),
         "html_path": os.path.join(reports_dir, "%s.html" % report_id),
         "json_path": os.path.join(reports_dir, "%s.json" % report_id),
-    }
+    })
 
 
 @router.get("/list")
-async def list_reports() -> List[Dict[str, Any]]:
+async def list_reports(request: Request) -> Dict[str, Any]:
     reports_dir = os.path.join(settings.local_store_path, "reports")
     if not os.path.exists(reports_dir):
-        return []
+        return build_envelope(request, [])
     reports = []
     for f in sorted(os.listdir(reports_dir), reverse=True):
         if f.endswith(".json"):
@@ -136,7 +138,50 @@ async def list_reports() -> List[Dict[str, Any]]:
                     })
             except Exception:
                 log.debug("Skipping malformed report file")
-    return reports[:50]
+    return build_envelope(request, reports[:50])
+
+
+@router.get("")
+async def list_reports_v2(request: Request) -> Dict[str, Any]:
+    """§129: GET /api/v1/reports — List all reports (spec-aligned path)."""
+    return await list_reports(request)
+
+
+@router.get("/{report_id}")
+async def get_report(report_id: str, request: Request) -> Dict[str, Any]:
+    """§25: Get a specific report by ID."""
+    reports_dir = os.path.join(settings.local_store_path, "reports")
+    json_path = os.path.join(reports_dir, f"{report_id}.json")
+    if not os.path.exists(json_path):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Report not found")
+    with open(json_path) as f:
+        report = json.load(f)
+    return build_envelope(request, report)
+
+
+@router.post("")
+async def create_report(req: ReportRequest, request: Request) -> Dict[str, Any]:
+    """§129: POST /api/v1/reports — Create a report (alias for /generate)."""
+    return await generate_report(req, request)
+
+
+@router.post("/{report_id}/export")
+async def export_report(report_id: str, request: Request, format: str = "html") -> Dict[str, Any]:
+    """§129: POST /api/v1/reports/{reportId}/export — Export report in specified format."""
+    reports_dir = os.path.join(settings.local_store_path, "reports")
+    json_path = os.path.join(reports_dir, f"{report_id}.json")
+    if not os.path.exists(json_path):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Report not found")
+    with open(json_path) as f:
+        report = json.load(f)
+    return build_envelope(request, {
+        "report_id": report_id,
+        "format": format,
+        "status": "exported",
+        "html": _render_html(report) if format == "html" else None,
+    })
 
 
 def _render_html(report: Dict[str, Any]) -> str:
@@ -184,7 +229,7 @@ section{margin-bottom:16px}
 .footer{margin-top:32px;font-size:0.7rem;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:8px}
 </style></head><body>
 <h1>%s</h1>
-<p style="color:#94a3b8;font-size:0.8rem">Generated: %s | DrugSynth Workbench v1.0.0</p>
+<p style="color:#94a3b8;font-size:0.8rem">Generated: %s | Drug Designer API v1.0.0</p>
 %s
-<div class="footer">DrugSynth Workbench — Research report. Verify all claims against primary sources.</div>
+<div class="footer">Drug Designer Platform — Research report. Verify all claims against primary sources.</div>
 </body></html>""" % (report["title"], report["title"], report.get("generated_at", ""), sections_html)

@@ -1,39 +1,61 @@
+# ── Core Framework ──────────────────────────────────────────
 fastapi>=0.135.2
 uvicorn[standard]>=0.42.0
 pydantic>=2.12.5
 pydantic-settings>=2.13.1
 platformdirs>=4.9.4
 httpx>=0.28.1
-aiosqlite>=0.22.1
-qdrant-client>=1.17.1
-
-# Document Intelligence
-PyMuPDF>=1.27.2.2
 python-multipart>=0.0.22
-redis>=7.4.0
-structlog>=25.5.0
-tenacity>=9.1.4
-arq>=0.27.0
-neo4j>=6.1.0
-pytest>=7.0.0
-pytest-asyncio>=0.21.0
-pytest-cov>=4.0.0
-ruff>=0.1.0
-black>=23.0.0
-rdkit>=2023.09.1
+cryptography>=41.0.0
+PyJWT>=2.10.1
+passlib[bcrypt]>=1.7.4
 
-# Media / Plotting (Phase 1)
+# ── Database & Storage ─────────────────────────────────────
+SQLAlchemy>=2.0.36
+aiosqlite>=0.22.1
+asyncpg>=0.30.0
+psycopg2-binary>=2.9.9
+alembic>=1.14.0
+redis>=4.2.0,<6.0.0
+qdrant-client>=1.17.1
+neo4j>=6.1.0
+
+# ── Data Science & Plotting ────────────────────────────────
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
 matplotlib>=3.7.0
 plotly>=5.15.0
 networkx>=3.1
-pandas>=2.0.0
 openpyxl>=3.1.0
-numpy>=1.24.0
-psutil>=5.9.0
 
-# Hosted Production (Phase 2)
-SQLAlchemy>=2.0.36
-asyncpg>=0.30.0
+# ── Deep Learning & NLP ───────────────────────────────────
+torch>=2.0.0
+transformers>=4.30.0
+spacy>=3.8.0
+sentence-transformers>=2.2.0
+gensim>=4.3.0
+faiss-cpu>=1.7.4
+airllm>=2.8.3
+esm>=3.0.0  # EvolutionaryScale ESM-C 600M + ESM-3 Forge API (§81.1, §24.2)
+
+# ── Domain-Specific ───────────────────────────────────────
+rdkit>=2023.09.1
+cobra>=0.29.0
+PyMuPDF>=1.27.2.2
+python-docx>=1.1.0
+
+# ── Infrastructure & Resilience ───────────────────────────
+structlog>=25.5.0
+tenacity>=9.1.4
+arq>=0.27.0
 boto3>=1.35.79
-PyJWT>=2.10.1
-passlib[bcrypt]>=1.7.4
+psutil>=5.9.0
+prometheus-fastapi-instrumentator>=7.0.0
+sentry-sdk[fastapi]>=2.0.0
+
+# ── HTTP & Scraping ───────────────────────────────────────
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0

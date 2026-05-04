@@ -76,5 +76,25 @@ class StorageClient:
             return True
         return False
 
+    def health_check(self) -> dict:
+        """Verify storage connectivity. Called at startup (A3)."""
+        if self.use_s3 and self.s3_client:
+            try:
+                self.s3_client.head_bucket(Bucket=settings.s3_bucket)
+                return {"status": "ok", "backend": "s3", "bucket": settings.s3_bucket}
+            except Exception as exc:
+                # Bucket missing — create it
+                try:
+                    self.s3_client.create_bucket(Bucket=settings.s3_bucket)
+                    log.info("storage_bucket_created", bucket=settings.s3_bucket)
+                    return {"status": "ok", "backend": "s3", "bucket": settings.s3_bucket, "action": "created"}
+                except Exception as create_exc:
+                    log.warning("storage_bucket_create_failed", error=str(create_exc))
+                    return {"status": "error", "backend": "s3", "error": str(exc)}
+        local_path = os.path.join(settings.local_store_path, "public")
+        os.makedirs(local_path, exist_ok=True)
+        return {"status": "ok", "backend": "local", "path": local_path}
+
+
 # Global Singleton
 storage_client = StorageClient()

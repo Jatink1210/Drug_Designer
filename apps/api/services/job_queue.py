@@ -3,6 +3,7 @@ In-process Job Queue — asyncio-based task scheduling.
 Replaces Redis for desktop/workbench mode while maintaining the same interface.
 For production, wrap this with a Redis-backed implementation.
 """
+import os
 import asyncio
 import uuid
 import time

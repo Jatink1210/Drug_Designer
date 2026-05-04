@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SF Pro Typography System Demo</title>
+  <link rel="stylesheet" href="/src/styles/fonts.css">
+  <link rel="stylesheet" href="/src/styles/typography.css">
+  <link rel="stylesheet" href="/src/styles/colors.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f5f7;
+    }
+    .demo-section {
+      padding: 60px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .demo-section.dark {
+      background: #000000;
+      color: #f5f5f7;
+    }
+    .demo-section.light {
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+    .demo-item {
+      margin-bottom: 40px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 8px;
+    }
+    .demo-section.dark .demo-item {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .demo-label {
+      font-family: 'SF Pro Text', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6e6e73;
+      margin-bottom: 8px;
+    }
+    .demo-section.dark .demo-label {
+      color: #a1a1a6;
+    }
+    .controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+    }
+    .controls button {
+      display: block;
+      width: 100%;
+      padding: 10px 20px;
+      margin-bottom: 10px;
+      background: #0071e3;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: 'SF Pro Text', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .controls button:hover {
+      background: #0077ed;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+    <button onclick="toggleReducedMotion()">Toggle Reduced Motion</button>
+  </div>
+
+  <!-- Hero Section (Dark) -->
+  <section class="demo-section dark">
+    <div class="demo-item">
+      <div class="demo-label">Hero (80px, Bold, SF Pro Display)</div>
+      <h1 class="text-hero">Disease Intelligence</h1>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Headline XL (64px, Semibold, SF Pro Display)</div>
+      <h1 class="text-headline-xl">Target Prioritization</h1>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Headline Large (48px, Semibold, SF Pro Display)</div>
+      <h2 class="text-headline-lg">Evidence Explorer</h2>
+    </div>
+  </section>
+
+  <!-- Content Section (Light) -->
+  <section class="demo-section light">
+    <div class="demo-item">
+      <div class="demo-label">Headline Medium (32px, Semibold, SF Pro Display)</div>
+      <h3 class="text-headline-md">Candidate Genes</h3>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Subheadline (24px, Semibold, SF Pro Display)</div>
+      <h4 class="text-subheadline">Pathway Analysis</h4>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Body Large (19px, Regular, SF Pro Text)</div>
+      <p class="text-body-lg">This is emphasized body text for important content. SF Pro Text is optimized for readability at smaller sizes with improved legibility and spacing.</p>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Body (17px, Regular, SF Pro Text)</div>
+      <p class="text-body">This is standard reading text for most content. The negative letter-spacing creates a tight, professional appearance while maintaining excellent readability. SF Pro Text is specifically designed for body copy.</p>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Body Small (15px, Regular, SF Pro Text)</div>
+      <p class="text-body-sm">This is smaller body text for secondary content. Even at this size, SF Pro Text maintains clarity and readability with its optical sizing optimizations.</p>
+    </div>
+  </section>
+
+  <!-- Details Section (Dark) -->
+  <section class="demo-section dark">
+    <div class="demo-item">
+      <div class="demo-label">Caption (13px, Regular, SF Pro Text)</div>
+      <p class="text-caption">Source: PubMed • 2024 • Confidence: 87%</p>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Micro (11px, Regular, SF Pro Text)</div>
+      <p class="text-micro">Last updated: 2 hours ago • ID: ABC123</p>
+    </div>
+  </section>
+
+  <!-- Weight Variations (Light) -->
+  <section class="demo-section light">
+    <h2 class="text-headline-lg" style="margin-bottom: 40px;">Weight Variations</h2>
+    <div class="demo-item">
+      <div class="demo-label">Light (300)</div>
+      <p class="text-body font-light">This text uses Light weight (300). Elegant and refined for sophisticated content.</p>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Regular (400)</div>
+      <p class="text-body font-regular">This text uses Regular weight (400). The default weight for most body text.</p>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Semibold (600)</div>
+      <p class="text-body font-semibold">This text uses Semibold weight (600). Perfect for emphasis and headings.</p>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Bold (700)</div>
+      <p class="text-body font-bold">This text uses Bold weight (700). Strong emphasis for critical information.</p>
+    </div>
+  </section>
+
+  <!-- Responsive Demo (Dark) -->
+  <section class="demo-section dark">
+    <h2 class="text-headline-lg" style="margin-bottom: 40px;">Responsive Typography</h2>
+    <div class="demo-item">
+      <div class="demo-label">Resize your browser to see responsive scaling</div>
+      <h1 class="text-hero">Responsive Hero</h1>
+      <p class="text-body">Desktop (1025px+): 80px • Tablet (769-1024px): 64px • Mobile (≤768px): 48px</p>
+    </div>
+  </section>
+
+  <!-- Accessibility Demo (Light) -->
+  <section class="demo-section light">
+    <h2 class="text-headline-lg" style="margin-bottom: 40px;">Accessibility Features</h2>
+    <div class="demo-item">
+      <div class="demo-label">Keyboard Navigation (Tab to focus)</div>
+      <p class="text-body" tabindex="0">This text is focusable. Press Tab to see the blue focus ring (2px solid #0071e3).</p>
+    </div>
+    <div class="demo-item">
+      <div class="demo-label">Color Contrast (WCAG AA Compliant)</div>
+      <p class="text-body text-on-light">Near black on light gray: 15.8:1 contrast ratio ✓</p>
+      <p class="text-body text-secondary-on-light">Medium gray on light: 4.6:1 contrast ratio ✓</p>
+    </div>
+  </section>
+
+  <!-- Dark Mode Demo -->
+  <section class="demo-section dark" data-theme="dark">
+    <h2 class="text-headline-lg" style="margin-bottom: 40px;">Dark Mode Adjustments</h2>
+    <div class="demo-item">
+      <div class="demo-label">Letter-spacing increased for readability</div>
+      <p class="text-body text-on-dark">Light gray on black: 15.3:1 contrast ratio ✓</p>
+      <p class="text-body text-secondary-on-dark">Light gray on black: 5.2:1 contrast ratio ✓</p>
+    </div>
+  </section>
+
+  <script>
+    function toggleDarkMode() {
+      const body = document.body;
+      const isDark = body.getAttribute('data-theme') === 'dark';
+      body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      
+      // Toggle section backgrounds
+      document.querySelectorAll('.demo-section').forEach(section => {
+        if (section.classList.contains('dark')) {
+          section.style.background = isDark ? '#000000' : '#1d1d1f';
+        } else {
+          section.style.background = isDark ? '#f5f5f7' : '#ffffff';
+        }
+      });
+    }
+
+    function toggleReducedMotion() {
+      const body = document.body;
+      const hasReducedMotion = body.style.getPropertyValue('--reduced-motion') === 'reduce';
+      body.style.setProperty('--reduced-motion', hasReducedMotion ? 'no-preference' : 'reduce');
+      
+      if (!hasReducedMotion) {
+        // Apply reduced motion styles
+        document.querySelectorAll('*').forEach(el => {
+          el.style.animationDuration = '0.01ms';
+          el.style.transitionDuration = '0.01ms';
+        });
+        alert('Reduced motion enabled');
+      } else {
+        // Remove reduced motion styles
+        document.querySelectorAll('*').forEach(el => {
+          el.style.animationDuration = '';
+          el.style.transitionDuration = '';
+        });
+        alert('Reduced motion disabled');
+      }
+    }
+
+    // Log font loading status
+    document.fonts.ready.then(() => {
+      console.log('✓ Fonts loaded:', document.fonts.size);
+      document.fonts.forEach(font => {
+        console.log(`  - ${font.family} ${font.weight} ${font.style}`);
+      });
+    });
+  </script>
+</body>
+</html>

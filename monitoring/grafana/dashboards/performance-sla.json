@@ -1,0 +1,290 @@
+{
+  "dashboard": {
+    "title": "Drug Designer - Performance SLA Monitoring",
+    "tags": ["drug-designer", "performance", "sla", "production"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "SLA Compliance Overview",
+        "type": "stat",
+        "gridPos": {"h": 6, "w": 24, "x": 0, "y": 0},
+        "description": "Percentage of requests meeting SLA targets (target: >95%)",
+        "targets": [
+          {
+            "expr": "(sum(rate(api_request_duration_seconds_bucket{le=\"0.2\",endpoint=~\"/api/auth.*|/api/health\"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~\"/api/auth.*|/api/health\"}[5m]))) * 100",
+            "legendFormat": "Health/Auth (<200ms)",
+            "refId": "A"
+          },
+          {
+            "expr": "(sum(rate(api_request_duration_seconds_bucket{le=\"2\",endpoint=~\"/api/evidence.*\"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~\"/api/evidence.*\"}[5m]))) * 100",
+            "legendFormat": "Evidence Search (<2s)",
+            "refId": "B"
+          },
+          {
+            "expr": "(sum(rate(api_request_duration_seconds_bucket{le=\"30\",endpoint=~\"/api/disease.*\"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~\"/api/disease.*\"}[5m]))) * 100",
+            "legendFormat": "Disease Intelligence (<30s)",
+            "refId": "C"
+          },
+          {
+            "expr": "(sum(rate(api_request_duration_seconds_bucket{le=\"15\",endpoint=~\"/api/targets.*\"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~\"/api/targets.*\"}[5m]))) * 100",
+            "legendFormat": "Target Prioritization (<15s)",
+            "refId": "D"
+          },
+          {
+            "expr": "(sum(rate(api_request_duration_seconds_bucket{le=\"1\",endpoint=~\"/api/graph.*\"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~\"/api/graph.*\"}[5m]))) * 100",
+            "legendFormat": "Graph Queries (<1s)",
+            "refId": "E"
+          },
+          {
+            "expr": "(sum(rate(api_request_duration_seconds_bucket{le=\"90\",endpoint=~\"/api/dossiers.*\"}[5m])) / sum(rate(api_request_duration_seconds_count{endpoint=~\"/api/dossiers.*\"}[5m]))) * 100",
+            "legendFormat": "Dossier Generation (<90s)",
+            "refId": "F"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "orientation": "horizontal",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "API Latency p95 by Endpoint",
+        "type": "graph",
+        "gridPos": {"h": 10, "w": 24, "x": 0, "y": 6},
+        "description": "95th percentile latency for all API endpoints",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(api_request_duration_seconds_bucket[5m])) by (endpoint, le))",
+            "legendFormat": "{{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency (p95)", "logBase": 10},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true,
+          "rightSide": false
+        },
+        "alert": {
+          "name": "High API Latency",
+          "conditions": [
+            {
+              "evaluator": {"params": [30], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "message": "API latency p95 exceeds 30s threshold",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 3,
+        "title": "Clinical Workflow Stage Latency (p95)",
+        "type": "graph",
+        "gridPos": {"h": 10, "w": 12, "x": 0, "y": 16},
+        "description": "95th percentile latency for clinical workflow stages",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(clinical_workflow_stage_duration_seconds_bucket[5m])) by (stage, le))",
+            "legendFormat": "{{stage}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency (p95)"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        }
+      },
+      {
+        "id": 4,
+        "title": "Clinical Workflow SLA Compliance",
+        "type": "stat",
+        "gridPos": {"h": 10, "w": 12, "x": 12, "y": 16},
+        "description": "Percentage of clinical workflow stages meeting SLA targets",
+        "targets": [
+          {
+            "expr": "(sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"ehr_ingestion\",le=\"5\"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage=\"ehr_ingestion\"}[5m]))) * 100",
+            "legendFormat": "EHR Ingestion (<5s)",
+            "refId": "A"
+          },
+          {
+            "expr": "(sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"phenotype_clustering\",le=\"30\"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage=\"phenotype_clustering\"}[5m]))) * 100",
+            "legendFormat": "Phenotype Clustering (<30s)",
+            "refId": "B"
+          },
+          {
+            "expr": "(sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"tissue_analysis\",le=\"120\"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage=\"tissue_analysis\"}[5m]))) * 100",
+            "legendFormat": "Tissue Analysis (<2min)",
+            "refId": "C"
+          },
+          {
+            "expr": "(sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"biomarker_quantification\",le=\"30\"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage=\"biomarker_quantification\"}[5m]))) * 100",
+            "legendFormat": "Biomarker Quantification (<30s)",
+            "refId": "D"
+          },
+          {
+            "expr": "(sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"pathogenicity_prediction\",le=\"60\"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage=\"pathogenicity_prediction\"}[5m]))) * 100",
+            "legendFormat": "Pathogenicity Prediction (<1min)",
+            "refId": "E"
+          },
+          {
+            "expr": "(sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"drug_matching\",le=\"30\"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage=\"drug_matching\"}[5m]))) * 100",
+            "legendFormat": "Drug Matching (<30s)",
+            "refId": "F"
+          },
+          {
+            "expr": "(sum(rate(clinical_workflow_stage_duration_seconds_bucket{stage=\"therapy_stratification\",le=\"10\"}[5m])) / sum(rate(clinical_workflow_stage_duration_seconds_count{stage=\"therapy_stratification\"}[5m]))) * 100",
+            "legendFormat": "Therapy Stratification (<10s)",
+            "refId": "G"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "orientation": "vertical",
+          "textMode": "value_and_name"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 90, "color": "yellow"},
+                {"value": 95, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Database Query Latency (p95)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 26},
+        "description": "95th percentile database query latency by operation",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket[5m])) by (operation, le))",
+            "legendFormat": "{{operation}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency (p95)"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        }
+      },
+      {
+        "id": 6,
+        "title": "Model Inference Latency (p95)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 26},
+        "description": "95th percentile model inference latency by model",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(model_inference_duration_seconds_bucket[5m])) by (model_name, le))",
+            "legendFormat": "{{model_name}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Latency (p95)"},
+          {"format": "short"}
+        ],
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "avg": true,
+          "current": true,
+          "max": true
+        }
+      },
+      {
+        "id": 7,
+        "title": "SLA Violations (Last 24h)",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 34},
+        "description": "Endpoints with >5% requests exceeding SLA targets",
+        "targets": [
+          {
+            "expr": "100 - ((sum(rate(api_request_duration_seconds_bucket[24h])) by (endpoint, le)) / sum(rate(api_request_duration_seconds_count[24h])) by (endpoint)) * 100",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "transformations": [
+          {
+            "id": "filterFieldsByName",
+            "options": {
+              "include": {
+                "names": ["endpoint", "Value"]
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "sortBy": [
+            {
+              "displayName": "Value",
+              "desc": true
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

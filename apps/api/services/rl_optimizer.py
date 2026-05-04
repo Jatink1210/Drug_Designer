@@ -1,19 +1,38 @@
-"""Reinforcement Learning (RL) Optimization Modules.
+"""Reinforcement Learning (RL) Optimization Modules (§84).
 
-Provides guarded pipeline execution for:
-1. Molecule Optimization — bioisosteric replacements + ADMET scoring
-2. Retrosynthesis Planning — reaction template disconnection
-3. Ontology Design — graph-based pathway analysis
+Provides:
+1. PPO molecule optimization with GNN policy network (§84.2)
+2. Bioisosteric replacements + ADMET scoring (baseline)
+3. Retrosynthesis planning via reaction templates (§85)
+4. Ontology design via graph analysis (§82.4)
+
+Reward function (§84.2):
+  R = w1×binding + w2×QED + w3×SA + w4×(1-toxicity) + w5×novelty - w6×penalty(MW>500)
 """
 from __future__ import annotations
 
 import hashlib
 import logging
-from typing import Any, Dict, List, Optional
+import math
+from typing import Any, Dict, List, Optional, Tuple
 import structlog
 from pydantic import BaseModel, Field
 
 from services.dl_models import DLModelService, RDKIT_AVAILABLE
+
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+
+try:
+    import numpy as np
+    NP_AVAILABLE = True
+except ImportError:
+    NP_AVAILABLE = False
 
 logger = structlog.get_logger(__name__)
 log = logging.getLogger(__name__)
@@ -482,3 +501,432 @@ class RLService:
                 "hubs_found": len(edges),
             },
         }
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# §84.2: PPO Molecule Optimization
+# ──────────────────────────────────────────────────────────────────────────
+
+class PPORewardFunction:
+    """Multi-objective reward for molecule design (§84.2).
+
+    R = w1×binding + w2×QED + w3×SA + w4×(1-toxicity) + w5×novelty - w6×penalty(MW>500)
+    """
+
+    def __init__(self, weights: Optional[Dict[str, float]] = None):
+        self.weights = weights or {
+            "binding": 0.30,
+            "qed": 0.20,
+            "sa": 0.15,
+            "toxicity": 0.15,
+            "novelty": 0.10,
+            "mw_penalty": 0.10,
+        }
+
+    def compute(self, smiles: str, seen_smiles: set,
+                binding_score: float = 0.5) -> float:
+        """Compute composite reward for a candidate molecule."""
+        if not RDKIT_AVAILABLE:
+            return 0.0
+
+        from rdkit import Chem
+        from rdkit.Chem import Descriptors, QED
+
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            return -1.0
+
+        w = self.weights
+
+        # QED (Quantitative Estimate of Drug-Likeness)
+        try:
+            qed_score = QED.qed(mol)
+        except Exception:
+            qed_score = 0.0
+
+        # Synthetic Accessibility Score (approximation via descriptor complexity)
+        try:
+            from rdkit.Chem import RDConfig
+            import sys, os
+            sa_path = os.path.join(RDConfig.RDContribDir, "SA_Score")
+            if sa_path not in sys.path:
+                sys.path.insert(0, sa_path)
+            try:
+                from sascorer import calculateScore
+                sa_raw = calculateScore(mol)  # 1 (easy) to 10 (hard)
+                sa_score = 1.0 - (sa_raw - 1.0) / 9.0  # normalise to 0-1
+            except ImportError:
+                # Fallback: inverse of heavy atom count (crude proxy)
+                heavy = mol.GetNumHeavyAtoms()
+                sa_score = max(0, 1.0 - heavy / 50.0)
+        except Exception:
+            sa_score = 0.5
+
+        # Toxicity proxy from ADMET (hERG liability)
+        admet = DLModelService.run_admet_prediction(smiles)
+        toxicity = 0.5
+        if admet.predictions and isinstance(admet.predictions, dict):
+            neural = admet.predictions.get("neural_admet", {})
+            if "herg" in neural:
+                toxicity = abs(neural["herg"].get("value", 0.5))
+
+        # Novelty: is this a new molecule?
+        novelty = 1.0 if smiles not in seen_smiles else 0.0
+
+        # Molecular weight penalty
+        mw = Descriptors.MolWt(mol)
+        mw_penalty = 1.0 if mw > 500 else 0.0
+
+        reward = (
+            w["binding"] * binding_score
+            + w["qed"] * qed_score
+            + w["sa"] * sa_score
+            + w["toxicity"] * (1.0 - toxicity)
+            + w["novelty"] * novelty
+            - w["mw_penalty"] * mw_penalty
+        )
+        return round(reward, 4)
+
+
+class PPOBuffer:
+    """Experience buffer for PPO training (§84.2)."""
+
+    def __init__(self):
+        self.states: List[Any] = []
+        self.actions: List[int] = []
+        self.rewards: List[float] = []
+        self.log_probs: List[float] = []
+        self.values: List[float] = []
+        self.dones: List[bool] = []
+
+    def store(self, state, action: int, reward: float,
+              log_prob: float, value: float, done: bool):
+        self.states.append(state)
+        self.actions.append(action)
+        self.rewards.append(reward)
+        self.log_probs.append(log_prob)
+        self.values.append(value)
+        self.dones.append(done)
+
+    def clear(self):
+        self.states.clear()
+        self.actions.clear()
+        self.rewards.clear()
+        self.log_probs.clear()
+        self.values.clear()
+        self.dones.clear()
+
+    def compute_gae(self, gamma: float = 0.99, lam: float = 0.95) -> Tuple[List[float], List[float]]:
+        """Generalised Advantage Estimation (GAE)."""
+        advantages = []
+        returns = []
+        gae = 0.0
+        next_value = 0.0
+        for t in reversed(range(len(self.rewards))):
+            if self.dones[t]:
+                next_value = 0.0
+                gae = 0.0
+            delta = self.rewards[t] + gamma * next_value - self.values[t]
+            gae = delta + gamma * lam * gae
+            advantages.insert(0, gae)
+            returns.insert(0, gae + self.values[t])
+            next_value = self.values[t]
+        return advantages, returns
+
+
+if TORCH_AVAILABLE:
+    class PPOMoleculeOptimizer:
+        """PPO-based molecule optimization (§84.2).
+
+        Uses MoleculeGNNPolicy for action selection and PPO clipping
+        update for policy improvement.
+        """
+
+        def __init__(self, atom_dim: int = 32, hidden_dim: int = 128,
+                     num_actions: int = 32, lr: float = 3e-4,
+                     clip_eps: float = 0.2, entropy_coeff: float = 0.01,
+                     value_coeff: float = 0.5, max_grad_norm: float = 0.5):
+            from services.dl_models import MoleculeGNNPolicy
+
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+            self.policy = MoleculeGNNPolicy(
+                atom_dim=atom_dim, hidden_dim=hidden_dim,
+                num_actions=num_actions
+            ).to(self.device)
+            self.optimizer = torch.optim.Adam(self.policy.parameters(), lr=lr)
+            self.clip_eps = clip_eps
+            self.entropy_coeff = entropy_coeff
+            self.value_coeff = value_coeff
+            self.max_grad_norm = max_grad_norm
+            self.buffer = PPOBuffer()
+            self.reward_fn = PPORewardFunction()
+
+        def select_action(self, atom_features: torch.Tensor,
+                          edge_index: Optional[torch.Tensor] = None) -> Tuple[int, float, float]:
+            """Select action from policy, return (action, log_prob, value)."""
+            self.policy.eval()
+            with torch.no_grad():
+                logits, value = self.policy(
+                    atom_features.to(self.device),
+                    edge_index.to(self.device) if edge_index is not None else None,
+                )
+                dist = torch.distributions.Categorical(logits=logits.squeeze(0))
+                action = dist.sample()
+                log_prob = dist.log_prob(action)
+            return action.item(), log_prob.item(), value.item()
+
+        def update(self, epochs: int = 4, batch_size: int = 32) -> Dict[str, float]:
+            """PPO clipping update (§84.2)."""
+            if len(self.buffer.states) == 0:
+                return {"policy_loss": 0.0, "value_loss": 0.0, "entropy": 0.0}
+
+            advantages, returns = self.buffer.compute_gae()
+
+            # Convert to tensors
+            old_log_probs = torch.tensor(self.buffer.log_probs, dtype=torch.float32, device=self.device)
+            actions = torch.tensor(self.buffer.actions, dtype=torch.long, device=self.device)
+            adv_t = torch.tensor(advantages, dtype=torch.float32, device=self.device)
+            ret_t = torch.tensor(returns, dtype=torch.float32, device=self.device)
+
+            # Normalise advantages
+            if len(adv_t) > 1:
+                adv_t = (adv_t - adv_t.mean()) / (adv_t.std() + 1e-8)
+
+            total_policy_loss = 0.0
+            total_value_loss = 0.0
+            total_entropy = 0.0
+            n_updates = 0
+
+            self.policy.train()
+            for _ in range(epochs):
+                # For simplicity, process all at once (no mini-batch for small buffers)
+                for i, state in enumerate(self.buffer.states):
+                    atom_feats = state["atom_features"].to(self.device)
+                    edge_idx = state.get("edge_index")
+                    if edge_idx is not None:
+                        edge_idx = edge_idx.to(self.device)
+
+                    logits, value = self.policy(atom_feats, edge_idx)
+                    dist = torch.distributions.Categorical(logits=logits.squeeze(0))
+                    new_log_prob = dist.log_prob(actions[i])
+                    entropy = dist.entropy().mean()
+
+                    # PPO clipping
+                    ratio = (new_log_prob - old_log_probs[i]).exp()
+                    surr1 = ratio * adv_t[i]
+                    surr2 = torch.clamp(ratio, 1.0 - self.clip_eps, 1.0 + self.clip_eps) * adv_t[i]
+                    policy_loss = -torch.min(surr1, surr2)
+                    value_loss = F.mse_loss(value.squeeze(), ret_t[i])
+
+                    loss = policy_loss + self.value_coeff * value_loss - self.entropy_coeff * entropy
+
+                    self.optimizer.zero_grad()
+                    loss.backward()
+                    nn.utils.clip_grad_norm_(self.policy.parameters(), self.max_grad_norm)
+                    self.optimizer.step()
+
+                    total_policy_loss += policy_loss.item()
+                    total_value_loss += value_loss.item()
+                    total_entropy += entropy.item()
+                    n_updates += 1
+
+            self.buffer.clear()
+
+            n = max(n_updates, 1)
+            return {
+                "policy_loss": round(total_policy_loss / n, 6),
+                "value_loss": round(total_value_loss / n, 6),
+                "entropy": round(total_entropy / n, 6),
+            }
+
+        def optimize_molecule(self, base_smiles: str, n_episodes: int = 10,
+                              max_steps: int = 20) -> Dict[str, Any]:
+            """Run PPO optimization loop on a molecule (§84.2).
+
+            Each episode:
+              1. Featurise current molecule as graph
+              2. Select action (add atom, remove atom, modify bond, etc.)
+              3. Apply action to get new molecule
+              4. Compute reward
+              5. Store transition in buffer
+            After episodes, run PPO update.
+            """
+            if not RDKIT_AVAILABLE:
+                return {"status": "failed", "reason": "RDKit required for PPO optimization"}
+
+            from rdkit import Chem
+
+            seen_smiles: set = {base_smiles}
+            best_candidates: List[Dict[str, Any]] = []
+            episode_rewards: List[float] = []
+
+            for episode in range(n_episodes):
+                current_smiles = base_smiles
+                episode_reward = 0.0
+
+                for step in range(max_steps):
+                    # Featurise molecule
+                    mol = Chem.MolFromSmiles(current_smiles)
+                    if mol is None:
+                        break
+
+                    atom_features, edge_index = self._featurise_mol(mol)
+                    action, log_prob, value = self.select_action(atom_features, edge_index)
+
+                    # Apply action to molecule
+                    new_smiles = self._apply_action(current_smiles, action)
+                    if new_smiles is None:
+                        reward = -0.1
+                        done = True
+                    else:
+                        reward = self.reward_fn.compute(new_smiles, seen_smiles)
+                        seen_smiles.add(new_smiles)
+                        done = step == max_steps - 1
+
+                    self.buffer.store(
+                        state={"atom_features": atom_features, "edge_index": edge_index},
+                        action=action, reward=reward,
+                        log_prob=log_prob, value=value, done=done,
+                    )
+
+                    episode_reward += reward
+
+                    if new_smiles and reward > 0:
+                        best_candidates.append({
+                            "smiles": new_smiles,
+                            "reward": round(reward, 4),
+                            "episode": episode,
+                            "step": step,
+                        })
+
+                    if done or new_smiles is None:
+                        break
+                    current_smiles = new_smiles
+
+                episode_rewards.append(episode_reward)
+
+            # PPO update
+            update_stats = self.update()
+
+            # Sort and deduplicate candidates
+            seen = set()
+            unique_candidates = []
+            for c in sorted(best_candidates, key=lambda x: x["reward"], reverse=True):
+                if c["smiles"] not in seen:
+                    seen.add(c["smiles"])
+                    unique_candidates.append(c)
+
+            return {
+                "status": "success",
+                "candidates": unique_candidates[:20],
+                "episode_rewards": [round(r, 4) for r in episode_rewards],
+                "ppo_update": update_stats,
+                "metadata": {
+                    "method": "ppo_gnn",
+                    "episodes": n_episodes,
+                    "max_steps": max_steps,
+                    "total_candidates": len(unique_candidates),
+                },
+            }
+
+        def _featurise_mol(self, mol) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+            """Convert RDKit mol to atom feature tensor and edge index."""
+            from rdkit import Chem
+
+            atoms = mol.GetAtoms()
+            n = len(atoms)
+
+            features = []
+            for atom in atoms:
+                feat = [
+                    atom.GetAtomicNum() / 100.0,
+                    atom.GetDegree() / 6.0,
+                    atom.GetTotalValence() / 8.0,
+                    float(atom.GetIsAromatic()),
+                    float(atom.IsInRing()),
+                    (atom.GetFormalCharge() + 3) / 6.0,
+                    atom.GetNumRadicalElectrons() / 2.0,
+                    float(atom.GetHybridization()) / 6.0,
+                ]
+                # Pad to 32 dims
+                feat.extend([0.0] * (32 - len(feat)))
+                features.append(feat[:32])
+
+            atom_features = torch.tensor(features, dtype=torch.float32)
+
+            # Build edge index from bonds (bidirectional)
+            src, dst = [], []
+            for bond in mol.GetBonds():
+                i, j = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+                src.extend([i, j])
+                dst.extend([j, i])
+
+            if src:
+                edge_index = torch.tensor([src, dst], dtype=torch.long)
+            else:
+                edge_index = None
+
+            return atom_features, edge_index
+
+        def _apply_action(self, smiles: str, action: int) -> Optional[str]:
+            """Apply a molecular editing action and return new SMILES.
+
+            Actions:
+              0-7:   Add atom type at random position
+              8-15:  Remove atom at position
+              16-23: Toggle bond type
+              24-31: Bioisosteric replacement
+            """
+            from rdkit import Chem
+
+            mol = Chem.MolFromSmiles(smiles)
+            if mol is None:
+                return None
+
+            try:
+                rw = Chem.RWMol(mol)
+
+                if action < 8:
+                    # Add atom
+                    atom_types = [6, 7, 8, 9, 16, 17, 35, 15]  # C,N,O,F,S,Cl,Br,P
+                    new_atom = Chem.Atom(atom_types[action % len(atom_types)])
+                    idx = rw.AddAtom(new_atom)
+                    # Bond to a random existing atom
+                    n_atoms = rw.GetNumAtoms() - 1
+                    if n_atoms > 0:
+                        target = action % n_atoms
+                        rw.AddBond(target, idx, Chem.BondType.SINGLE)
+                elif action < 16:
+                    # Remove atom
+                    n_atoms = rw.GetNumAtoms()
+                    if n_atoms > 2:
+                        target = (action - 8) % n_atoms
+                        rw.RemoveAtom(target)
+                elif action < 24:
+                    # Toggle bond type
+                    bonds = list(rw.GetBonds())
+                    if bonds:
+                        bond = bonds[(action - 16) % len(bonds)]
+                        current = bond.GetBondType()
+                        if current == Chem.BondType.SINGLE:
+                            bond.SetBondType(Chem.BondType.DOUBLE)
+                        elif current == Chem.BondType.DOUBLE:
+                            bond.SetBondType(Chem.BondType.SINGLE)
+                else:
+                    # Bioisosteric replacement
+                    pair_idx = (action - 24) % len(BIOISOSTERE_PAIRS)
+                    name, query_smarts, repl_smarts = BIOISOSTERE_PAIRS[pair_idx]
+                    from rdkit.Chem import AllChem
+                    query = Chem.MolFromSmarts(query_smarts)
+                    repl = Chem.MolFromSmiles(repl_smarts)
+                    if query and repl and mol.HasSubstructMatch(query):
+                        products = AllChem.ReplaceSubstructs(mol, query, repl)
+                        if products:
+                            Chem.SanitizeMol(products[0])
+                            return Chem.MolToSmiles(products[0])
+                    return None
+
+                Chem.SanitizeMol(rw)
+                return Chem.MolToSmiles(rw)
+            except Exception:
+                return None

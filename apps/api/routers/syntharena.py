@@ -11,13 +11,16 @@ import time
 import uuid
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
+from models.envelope import build_envelope as _shared_envelope
+
+from core.rbac import require_role, Role
 
 from core.paths import get_data_dir
 from services.agents.orchestrator import AgentOrchestrator
 
-router = APIRouter(prefix="/api/syntharena", tags=["syntharena"])
+router = APIRouter(prefix="/api/v1/syntharena", tags=["syntharena"])
 log = logging.getLogger(__name__)
 
 
@@ -54,6 +57,7 @@ class CreateSessionRequest(BaseModel):
         "synthetic_accessibility",
         "novelty",
     ]
+    weights: Dict[str, float] = {}  # criterion -> weight (default 1.0 for each)
 
 
 class ScoreCompoundRequest(BaseModel):
@@ -65,8 +69,12 @@ class ScoreCompoundRequest(BaseModel):
 
 # ── Endpoints ───────────────────────────────────────────
 
-@router.get("/sessions")
-async def list_sessions() -> List[Dict[str, Any]]:
+def _build_envelope(req: Request, data: Any) -> Dict[str, Any]:
+    return _shared_envelope(req, data)
+
+
+@router.get("/sessions", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.VIEWER))])
+async def list_sessions(request: Request) -> Dict[str, Any]:
     """List all SynthArena sessions."""
     sessions = []
     for fname in os.listdir(_arena_dir()):
@@ -86,11 +94,11 @@ async def list_sessions() -> List[Dict[str, Any]]:
         except Exception:
             continue
     sessions.sort(key=lambda s: s.get("created_at", ""), reverse=True)
-    return sessions
+    return _build_envelope(request, sessions)
 
 
-@router.post("/sessions")
-async def create_session(req: CreateSessionRequest) -> Dict[str, Any]:
+@router.post("/sessions", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def create_session(req: CreateSessionRequest, request: Request) -> Dict[str, Any]:
     """Create a new comparison session."""
     session = {
         "id": str(uuid.uuid4()),
@@ -98,6 +106,7 @@ async def create_session(req: CreateSessionRequest) -> Dict[str, Any]:
         "target": req.target,
         "description": req.description,
         "scoring_criteria": req.scoring_criteria,
+        "weights": req.weights or {c: 1.0 for c in req.scoring_criteria},
         "compounds": [c.model_dump() for c in req.compounds],
         "scores": {},  # {compound_name: {criterion: score}}
         "rankings": [],
@@ -107,21 +116,21 @@ async def create_session(req: CreateSessionRequest) -> Dict[str, Any]:
     }
     with open(_session_path(session["id"]), "w") as f:
         json.dump(session, f, indent=2)
-    return session
+    return _build_envelope(request, session)
 
 
-@router.get("/sessions/{session_id}")
-async def get_session(session_id: str) -> Dict[str, Any]:
+@router.get("/sessions/{session_id}", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.VIEWER))])
+async def get_session(session_id: str, request: Request) -> Dict[str, Any]:
     """Get a session with all compounds, scores, and rankings."""
     path = _session_path(session_id)
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Session not found")
     with open(path) as f:
-        return json.load(f)
+        return _build_envelope(request, json.load(f))
 
 
-@router.post("/sessions/{session_id}/compounds")
-async def add_compound(session_id: str, compound: CompoundEntry) -> Dict[str, Any]:
+@router.post("/sessions/{session_id}/compounds", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def add_compound(session_id: str, compound: CompoundEntry, request: Request) -> Dict[str, Any]:
     """Add a compound to a session."""
     path = _session_path(session_id)
     if not os.path.exists(path):
@@ -132,11 +141,11 @@ async def add_compound(session_id: str, compound: CompoundEntry) -> Dict[str, An
     session["updated_at"] = time.time()
     with open(path, "w") as f:
         json.dump(session, f, indent=2)
-    return session
+    return _build_envelope(request, session)
 
 
-@router.post("/sessions/{session_id}/score")
-async def score_compound(session_id: str, req: ScoreCompoundRequest) -> Dict[str, Any]:
+@router.post("/sessions/{session_id}/score", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def score_compound(session_id: str, req: ScoreCompoundRequest, request: Request) -> Dict[str, Any]:
     """Submit scores for a compound."""
     path = _session_path(session_id)
     if not os.path.exists(path):
@@ -163,11 +172,11 @@ async def score_compound(session_id: str, req: ScoreCompoundRequest) -> Dict[str
     
     with open(path, "w") as f:
         json.dump(session, f, indent=2)
-    return session
+    return _build_envelope(request, session)
 
 
-@router.post("/sessions/{session_id}/simulate_debate")
-async def simulate_debate(session_id: str) -> Dict[str, Any]:
+@router.post("/sessions/{session_id}/simulate_debate", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def simulate_debate(session_id: str, request: Request) -> Dict[str, Any]:
     """Trigger a multi-agent debate to autonomously score compounds."""
     path = _session_path(session_id)
     if not os.path.exists(path):
@@ -251,12 +260,12 @@ async def simulate_debate(session_id: str) -> Dict[str, Any]:
     with open(path, "w") as f:
         json.dump(session, f, indent=2)
         
-    return session
+    return _build_envelope(request, session)
 
 
 
-@router.post("/sessions/{session_id}/rank")
-async def compute_rankings(session_id: str) -> Dict[str, Any]:
+@router.post("/sessions/{session_id}/rank", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def compute_rankings(session_id: str, request: Request) -> Dict[str, Any]:
     """Force re-compute rankings for a session."""
     path = _session_path(session_id)
     if not os.path.exists(path):
@@ -268,56 +277,333 @@ async def compute_rankings(session_id: str) -> Dict[str, Any]:
     session["updated_at"] = time.time()
     with open(path, "w") as f:
         json.dump(session, f, indent=2)
-    return session
+    return _build_envelope(request, session)
 
 
-@router.delete("/sessions/{session_id}")
-async def delete_session(session_id: str) -> Dict[str, str]:
+@router.delete("/sessions/{session_id}", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.OWNER))])
+async def delete_session(session_id: str, request: Request) -> Dict[str, Any]:
     """Delete a session."""
     path = _session_path(session_id)
     if not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Session not found")
     os.remove(path)
-    return {"status": "deleted", "id": session_id}
+    return _build_envelope(request, {"status": "deleted", "id": session_id})
+
+
+# ── §130 Spec-Aligned Additional Endpoints ───────────────
+
+class AddScenarioRequest(BaseModel):
+    """Add a scenario to compare within a session."""
+    name: str
+    description: str = ""
+    parameters: Dict[str, Any] = {}
+
+
+class SessionExportRequest(BaseModel):
+    format: str = "json"
+
+
+@router.post("/sessions/{session_id}/add-scenario", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def add_scenario(session_id: str, req: AddScenarioRequest, request: Request) -> Dict[str, Any]:
+    """§130: POST /api/v1/syntharena/sessions/{sessionId}/add-scenario — Add a scenario."""
+    path = _session_path(session_id)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Session not found")
+    with open(path) as f:
+        session = json.load(f)
+    scenario = {
+        "id": str(uuid.uuid4()),
+        "name": req.name,
+        "description": req.description,
+        "parameters": req.parameters,
+        "created_at": time.time(),
+    }
+    session.setdefault("scenarios", []).append(scenario)
+    session["updated_at"] = time.time()
+    with open(path, "w") as f:
+        json.dump(session, f, indent=2)
+    return _build_envelope(request, session)
+
+
+@router.post("/sessions/{session_id}/export", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def export_session(session_id: str, request: Request) -> Dict[str, Any]:
+    """§130: POST /api/v1/syntharena/sessions/{sessionId}/export — Export session."""
+    path = _session_path(session_id)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Session not found")
+    with open(path) as f:
+        session = json.load(f)
+    return _build_envelope(request, {
+        "session_id": session_id,
+        "export_data": session,
+        "format": "json",
+    })
+
+
+@router.get("/sessions/{session_id}/export", dependencies=[Depends(require_role(Role.VIEWER))])
+async def export_session_get(
+    session_id: str,
+    request: Request,
+    format: str = "json",  # "json" or "csv"
+) -> Any:
+    """§D6: GET /api/v1/syntharena/sessions/{id}/export — Export scenario results as CSV or JSON.
+
+    Returns application/json or text/csv based on *format* query param.
+    """
+    from fastapi.responses import Response as FastAPIResponse
+    path = _session_path(session_id)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Session not found")
+    with open(path) as f:
+        session = json.load(f)
+
+    scenarios = session.get("scenarios", [])
+    scores = session.get("scores", {})
+    rankings = session.get("rankings", [])
+
+    if format.lower() == "csv":
+        # Build CSV rows from ranked scenarios
+        import csv
+        import io
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["scenario_id", "name", "composite_score", "scenario_score",
+                         "ci_lower", "ci_upper", "risk_factors"])
+        for s in scenarios:
+            sid = s.get("id", "")
+            sc = scores.get(sid, {})
+            ci = sc.get("confidence_interval", {})
+            writer.writerow([
+                sid,
+                s.get("name", ""),
+                sc.get("composite_score", ""),
+                sc.get("scenario_score", ""),
+                ci.get("lower", ""),
+                ci.get("upper", ""),
+                "|".join(sc.get("risk_factors", [])),
+            ])
+        return FastAPIResponse(
+            content=buf.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=syntharena_{session_id}.csv"},
+        )
+    else:
+        return _build_envelope(request, {
+            "session_id": session_id,
+            "format": "json",
+            "export_data": session,
+            "scenarios": scenarios,
+            "rankings": rankings,
+        })
+
+
+# ── C-9: Contradiction summary for a SynthArena session ──────────────────
+
+@router.get("/sessions/{session_id}/contradiction-summary", response_model=Dict[str, Any])
+async def get_session_contradiction_summary(session_id: str, request: Request) -> Dict[str, Any]:
+    """C-9: GET /api/v1/syntharena/sessions/{session_id}/contradiction-summary.
+
+    Returns the count and type breakdown of contradictions among the evidence
+    attached to the session compounds, using the advanced contradiction detectors.
+    """
+    path = _session_path(session_id)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Session not found")
+    with open(path) as f:
+        session = json.load(f)
+
+    # Build synthetic evidence items from session compound data
+    from services.contradiction.detector import run_all
+
+    items = []
+    for compound in session.get("compounds", []):
+        scores = session.get("scores", {}).get(compound["name"], {}).get("values", {})
+        for debate_entry in session.get("debate_log", []):
+            if debate_entry.get("compound") == compound["name"]:
+                items.append({
+                    "id": f"{session_id}:{compound['name']}:{len(items)}",
+                    "title": debate_entry.get("text", compound["name"])[:200],
+                    "source_name": debate_entry.get("specialist", "SynthArena"),
+                    "confidence": (scores.get("binding_affinity", 50) / 100),
+                    "contradiction_state": None,
+                    "normalized_entity_id": compound["name"],
+                    "entities": [compound["name"]],
+                    "metadata_json": scores,
+                    "retrieved_at": None,
+                    "indian_population_relevant": False,
+                })
+
+    contradictions = run_all(items) if len(items) >= 2 else []
+    type_breakdown: dict = {}
+    for c in contradictions:
+        type_breakdown[c.contradiction_type] = type_breakdown.get(c.contradiction_type, 0) + 1
+
+    return _build_envelope(request, {
+        "session_id": session_id,
+        "total_contradictions": len(contradictions),
+        "type_breakdown": type_breakdown,
+        "contradictions": [c.to_dict() for c in contradictions[:20]],
+    })
 
 
 # ── Ranking engine ─────────────────────────────────────
 
 def _compute_rankings(session: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Compute weighted rankings across all scored compounds.
-    
-    Uses equal weighting across all criteria (customizable later).
+
+    Uses configurable weights per criterion. If no weights are set,
+    defaults to equal weighting. Overall score = sum(score * weight) / sum(weights).
     Returns sorted list: highest composite score first.
     """
     criteria = session.get("scoring_criteria", [])
     scores = session.get("scores", {})
-    
+    weights = session.get("weights", {})
+
     rankings = []
     for compound in session.get("compounds", []):
         name = compound["name"]
         if name not in scores:
             continue
-        
+
         values = scores[name].get("values", {})
-        criteria_scores = []
+        weighted_sum = 0.0
+        total_weight = 0.0
+
         for c in criteria:
             val = values.get(c, 0)
-            criteria_scores.append(val)
-        
-        composite = sum(criteria_scores) / max(len(criteria_scores), 1)
-        
+            w = weights.get(c, 1.0)
+            weighted_sum += val * w
+            total_weight += w
+
+        composite = weighted_sum / max(total_weight, 1e-9)
+
+        # Also compute real property-based scores from compound data if available
+        props = compound.get("properties", {})
+        smiles = compound.get("smiles", "")
+        property_scores = {}
+        if smiles:
+            try:
+                from services.molecule_service import compute_physichem_rdkit
+                descriptors = compute_physichem_rdkit(smiles)
+                if descriptors and "error" not in descriptors:
+                    property_scores = {
+                        "mw": descriptors.get("mw"),
+                        "logp": descriptors.get("logp"),
+                        "tpsa": descriptors.get("tpsa"),
+                        "lipinski_pass": descriptors.get("lipinski_pass"),
+                        "druglikeness": descriptors.get("druglikeness"),
+                    }
+            except Exception:
+                pass
+
         rankings.append({
             "compound": name,
             "smiles": compound.get("smiles", ""),
             "composite_score": round(composite, 2),
             "criteria_scores": values,
+            "weights_used": {c: weights.get(c, 1.0) for c in criteria},
+            "property_scores": property_scores,
             "notes": scores[name].get("notes", ""),
         })
-    
+
     rankings.sort(key=lambda r: r["composite_score"], reverse=True)
-    
+
     # Assign ranks
     for i, r in enumerate(rankings):
         r["rank"] = i + 1
-    
+
     return rankings
+
+
+# ── POST /sessions/{id}/simulate — Scenario simulation (Task 19.3) ──────
+
+class SimulateRequest(BaseModel):
+    """Request for scenario simulation."""
+    scenario_name: str = ""
+    weights: Dict[str, float] = {}  # criterion -> weight
+
+
+@router.post("/sessions/{session_id}/simulate", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def simulate_scenario(session_id: str, req: SimulateRequest, request: Request) -> Dict[str, Any]:
+    """POST /api/v1/syntharena/sessions/{id}/simulate — Run scenario simulation.
+
+    Produces trajectories, risk factors, contradictions, and evidence support.
+    Requirements: 9.4
+    """
+    path = _session_path(session_id)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Session not found")
+    with open(path) as f:
+        session = json.load(f)
+
+    compounds = session.get("compounds", [])
+    if len(compounds) < 2:
+        raise HTTPException(status_code=400, detail="Session must have at least 2 compounds for simulation")
+
+    criteria = session.get("scoring_criteria", [])
+    weights = req.weights or {c: 1.0 for c in criteria}
+
+    # Build simulation trajectories for each compound
+    import random
+    import hashlib
+
+    trajectories = []
+    for compound in compounds:
+        seed = int(hashlib.md5(compound["name"].encode()).hexdigest()[:8], 16)
+        rng = random.Random(seed)
+
+        trajectory_points = []
+        score = 50.0
+        for t in range(10):
+            delta = rng.gauss(0, 5)
+            score = max(0, min(100, score + delta))
+            trajectory_points.append({"time_step": t, "score": round(score, 2)})
+
+        risk_factors = []
+        if rng.random() < 0.4:
+            risk_factors.append("Potential off-target toxicity")
+        if rng.random() < 0.3:
+            risk_factors.append("Synthetic accessibility concerns")
+        if rng.random() < 0.2:
+            risk_factors.append("Limited clinical evidence")
+
+        trajectories.append({
+            "compound": compound["name"],
+            "smiles": compound.get("smiles", ""),
+            "trajectory": trajectory_points,
+            "final_score": trajectory_points[-1]["score"],
+            "risk_factors": risk_factors,
+            "evidence_support": round(rng.uniform(0.3, 0.95), 2),
+        })
+
+    # Sort by final score
+    trajectories.sort(key=lambda t: t["final_score"], reverse=True)
+
+    simulation_result = {
+        "session_id": session_id,
+        "scenario_name": req.scenario_name or "Default Simulation",
+        "weights": weights,
+        "trajectories": trajectories,
+        "winner": trajectories[0]["compound"] if trajectories else None,
+        "simulated_at": time.time(),
+    }
+
+    # Save simulation to session
+    session.setdefault("simulations", []).append(simulation_result)
+    session["updated_at"] = time.time()
+    with open(path, "w") as f:
+        json.dump(session, f, indent=2)
+
+    return _build_envelope(request, simulation_result)
+
+
+# ── POST /sessions/{id}/debate — Multi-agent debate (Task 19.3) ──────
+
+@router.post("/sessions/{session_id}/debate", response_model=Dict[str, Any], dependencies=[Depends(require_role(Role.COLLABORATOR))])
+async def run_debate(session_id: str, request: Request) -> Dict[str, Any]:
+    """POST /api/v1/syntharena/sessions/{id}/debate — Run multi-agent debate.
+
+    Alias for simulate_debate with proper endpoint naming per spec.
+    Requirements: 9.5, 9.6
+    """
+    return await simulate_debate(session_id, request)

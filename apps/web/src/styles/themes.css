@@ -1,0 +1,499 @@
+/**
+ * Theme System
+ * 
+ * Apple Design System Theme Implementation
+ * 
+ * Features:
+ * - Light/dark mode toggle support
+ * - Theme switching utilities
+ * - Binary section alternation patterns
+ * - Cinematic pacing utilities
+ * - Smooth theme transitions
+ * - System preference detection
+ * - Theme persistence
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   Theme Base Configuration
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Theme transition timing */
+  --theme-transition-duration: 0.3s;
+  --theme-transition-timing: cubic-bezier(0.4, 0.0, 0.2, 1);
+  
+  /* Cinematic pacing (section spacing) */
+  --section-spacing-sm: 60px;
+  --section-spacing-md: 100px;
+  --section-spacing-lg: 140px;
+  --section-spacing-xl: 180px;
+  
+  /* Section min-height for cinematic impact */
+  --section-min-height-hero: 100vh;
+  --section-min-height-standard: 80vh;
+  --section-min-height-compact: 60vh;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Theme Switching Utilities
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Smooth transitions for theme changes */
+html {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+body {
+  transition: background-color var(--theme-transition-duration) var(--theme-transition-timing),
+              color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+/* Apply transitions to all theme-aware elements */
+* {
+  transition-property: background-color, color, border-color, box-shadow;
+  transition-duration: var(--theme-transition-duration);
+  transition-timing-function: var(--theme-transition-timing);
+}
+
+/* Disable transitions for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body,
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Light Mode (Default)
+   ═══════════════════════════════════════════════════════════════ */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  
+  /* Apply light mode colors */
+  background-color: var(--color-light-gray);
+  color: var(--color-text-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Dark Mode
+   ═══════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  
+  /* Apply dark mode colors */
+  background-color: var(--color-black);
+  color: var(--color-text-on-dark);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   System Preference Detection
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Automatically apply dark mode if user's system preference is dark
+ * and no explicit theme is set via [data-theme] attribute.
+ * 
+ * Usage:
+ * - Add [data-theme="auto"] to <html> to enable auto-detection
+ * - Or omit [data-theme] entirely to use system preference
+ */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]),
+  [data-theme="auto"] {
+    color-scheme: dark;
+    background-color: var(--color-black);
+    color: var(--color-text-on-dark);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]),
+  [data-theme="auto"] {
+    color-scheme: light;
+    background-color: var(--color-light-gray);
+    color: var(--color-text-primary);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Theme Toggle Button
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Styled theme toggle button following Apple design patterns.
+ * 
+ * Usage:
+ * <button class="theme-toggle" aria-label="Toggle theme">
+ *   <span class="theme-toggle-icon">☀️</span>
+ * </button>
+ */
+
+.theme-toggle {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}
+
+[data-theme="dark"] .theme-toggle {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.theme-toggle-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Icon rotation animation on theme change */
+.theme-toggle-icon {
+  transition: transform 0.3s ease;
+}
+
+.theme-toggle:active .theme-toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Binary Section Alternation Patterns
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Cinematic binary alternation for major workflow sections.
+ * 
+ * Pattern: Black → Light Gray → Black → Light Gray
+ * 
+ * Usage:
+ * <section class="section-cinematic">Hero (Black)</section>
+ * <section class="section-cinematic">Disease Intelligence (Light Gray)</section>
+ * <section class="section-cinematic">Target Discovery (Black)</section>
+ */
+
+.section-cinematic {
+  min-height: var(--section-min-height-standard);
+  padding: var(--section-spacing-lg) 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.section-cinematic:nth-child(odd) {
+  background-color: var(--color-bg-section-dark);
+  color: var(--color-text-on-dark);
+}
+
+.section-cinematic:nth-child(even) {
+  background-color: var(--color-bg-section-light);
+  color: var(--color-text-primary);
+}
+
+/* Hero sections (full viewport height) */
+.section-hero {
+  min-height: var(--section-min-height-hero);
+  padding: var(--section-spacing-xl) 0;
+  background-color: var(--color-bg-hero);
+  color: var(--color-text-on-dark);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Compact sections (less vertical space) */
+.section-compact {
+  min-height: var(--section-min-height-compact);
+  padding: var(--section-spacing-md) 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Cinematic Pacing Utilities
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Spacing utilities for cinematic rhythm and pacing.
+ * Use these to create dramatic pauses and visual breathing room.
+ */
+
+/* Vertical spacing utilities */
+.spacing-sm {
+  padding-top: var(--section-spacing-sm);
+  padding-bottom: var(--section-spacing-sm);
+}
+
+.spacing-md {
+  padding-top: var(--section-spacing-md);
+  padding-bottom: var(--section-spacing-md);
+}
+
+.spacing-lg {
+  padding-top: var(--section-spacing-lg);
+  padding-bottom: var(--section-spacing-lg);
+}
+
+.spacing-xl {
+  padding-top: var(--section-spacing-xl);
+  padding-bottom: var(--section-spacing-xl);
+}
+
+/* Margin utilities for section separation */
+.margin-top-sm {
+  margin-top: var(--section-spacing-sm);
+}
+
+.margin-top-md {
+  margin-top: var(--section-spacing-md);
+}
+
+.margin-top-lg {
+  margin-top: var(--section-spacing-lg);
+}
+
+.margin-top-xl {
+  margin-top: var(--section-spacing-xl);
+}
+
+.margin-bottom-sm {
+  margin-bottom: var(--section-spacing-sm);
+}
+
+.margin-bottom-md {
+  margin-bottom: var(--section-spacing-md);
+}
+
+.margin-bottom-lg {
+  margin-bottom: var(--section-spacing-lg);
+}
+
+.margin-bottom-xl {
+  margin-bottom: var(--section-spacing-xl);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Responsive Cinematic Pacing
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Tablet (769px - 1024px) - Reduce spacing by ~20% */
+@media (max-width: 1024px) and (min-width: 769px) {
+  :root {
+    --section-spacing-sm: 48px;
+    --section-spacing-md: 80px;
+    --section-spacing-lg: 112px;
+    --section-spacing-xl: 144px;
+    
+    --section-min-height-hero: 90vh;
+    --section-min-height-standard: 70vh;
+    --section-min-height-compact: 50vh;
+  }
+}
+
+/* Mobile (768px and below) - Reduce spacing by ~40% */
+@media (max-width: 768px) {
+  :root {
+    --section-spacing-sm: 36px;
+    --section-spacing-md: 60px;
+    --section-spacing-lg: 84px;
+    --section-spacing-xl: 108px;
+    
+    --section-min-height-hero: 80vh;
+    --section-min-height-standard: 60vh;
+    --section-min-height-compact: 40vh;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Theme-Aware Component Overrides
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Ensure all components respect theme changes.
+ * These overrides ensure consistent theming across all UI elements.
+ */
+
+/* Cards in dark mode */
+[data-theme="dark"] .bg-card {
+  background-color: var(--color-bg-card);
+  color: var(--color-text-primary);
+}
+
+/* Elevated surfaces in dark mode */
+[data-theme="dark"] .bg-elevated {
+  background-color: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+}
+
+/* Borders in dark mode */
+[data-theme="dark"] .border-light {
+  border-color: var(--color-border-light);
+}
+
+[data-theme="dark"] .border-medium {
+  border-color: var(--color-border-medium);
+}
+
+[data-theme="dark"] .border-dark {
+  border-color: var(--color-border-dark);
+}
+
+/* Shadows in dark mode */
+[data-theme="dark"] .shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+[data-theme="dark"] .shadow-xl {
+  box-shadow: var(--shadow-xl);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Theme Persistence (JavaScript Integration)
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * JAVASCRIPT INTEGRATION:
+ * 
+ * To persist theme preference across sessions, use localStorage:
+ * 
+ * // Get current theme
+ * const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+ * 
+ * // Set theme
+ * function setTheme(theme) {
+ *   document.documentElement.setAttribute('data-theme', theme);
+ *   localStorage.setItem('theme', theme);
+ * }
+ * 
+ * // Toggle theme
+ * function toggleTheme() {
+ *   const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+ *   const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+ *   setTheme(newTheme);
+ * }
+ * 
+ * // Load saved theme on page load
+ * function loadTheme() {
+ *   const savedTheme = localStorage.getItem('theme');
+ *   if (savedTheme) {
+ *     document.documentElement.setAttribute('data-theme', savedTheme);
+ *   } else {
+ *     // Use system preference if no saved theme
+ *     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+ *     document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+ *   }
+ * }
+ * 
+ * // Initialize on page load
+ * loadTheme();
+ * 
+ * // Listen for system preference changes
+ * window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+ *   if (!localStorage.getItem('theme')) {
+ *     document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+ *   }
+ * });
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   Usage Examples (Documentation)
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * USAGE EXAMPLES:
+ * 
+ * Basic Theme Setup:
+ * <html data-theme="light">
+ *   <body>
+ *     <button class="theme-toggle" onclick="toggleTheme()">
+ *       <span class="theme-toggle-icon">☀️</span>
+ *     </button>
+ *   </body>
+ * </html>
+ * 
+ * Auto Theme (System Preference):
+ * <html data-theme="auto">
+ *   <!-- Theme automatically follows system preference -->
+ * </html>
+ * 
+ * Cinematic Section Alternation:
+ * <section class="section-hero">
+ *   <h1>Disease Intelligence</h1>
+ * </section>
+ * <section class="section-cinematic">
+ *   <h2>Target Discovery</h2>
+ * </section>
+ * <section class="section-cinematic">
+ *   <h2>Evidence Explorer</h2>
+ * </section>
+ * 
+ * Compact Sections:
+ * <section class="section-cinematic section-compact">
+ *   <h3>Quick Info Section</h3>
+ * </section>
+ * 
+ * Spacing Utilities:
+ * <div class="spacing-lg">
+ *   <p>Content with large vertical spacing</p>
+ * </div>
+ * 
+ * <div class="margin-top-xl">
+ *   <p>Content with extra-large top margin</p>
+ * </div>
+ * 
+ * RESPONSIVE BEHAVIOR:
+ * - Desktop (1025px+): Full cinematic spacing (100vh hero, 140px padding)
+ * - Tablet (769px-1024px): ~20% smaller spacing (90vh hero, 112px padding)
+ * - Mobile (768px and below): ~40% smaller spacing (80vh hero, 84px padding)
+ * 
+ * THEME SWITCHING:
+ * - Light mode: Light gray background, near black text
+ * - Dark mode: Black background, light gray text
+ * - Auto mode: Follows system preference (prefers-color-scheme)
+ * - Smooth transitions: 0.3s cubic-bezier easing
+ * - Reduced motion: Transitions disabled for accessibility
+ * 
+ * ACCESSIBILITY:
+ * - Theme toggle button: 44x44px minimum touch target
+ * - Smooth transitions respect prefers-reduced-motion
+ * - Color scheme meta tag for browser UI theming
+ * - ARIA labels for theme toggle button
+ * - Keyboard accessible (Tab + Enter/Space)
+ * 
+ * CINEMATIC PACING:
+ * - Hero sections: Full viewport height for dramatic impact
+ * - Standard sections: 80vh minimum for immersive experience
+ * - Compact sections: 60vh for quick information
+ * - Binary alternation: Black → Light Gray → Black → Light Gray
+ * - Generous spacing: 60px-180px vertical padding for breathing room
+ */

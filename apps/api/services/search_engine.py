@@ -5,9 +5,11 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import math
+import re
 import time
 from collections import defaultdict
-from typing import Any, Dict, List, Set, Tuple, Type
+from typing import Any, Dict, List, Literal, Optional, Set, Tuple, Type
 
 import structlog
 
@@ -28,6 +30,19 @@ from connectors.gwas_catalog import GWASCatalogConnector
 from connectors.indigen_loader import IndiGenLoader
 from connectors.igvdb_loader import IGVDBLoader
 from connectors.genomeasia_loader import GenomeAsiaLoader
+from connectors.kegg import KEGGConnector
+from connectors.wikipathways import WikiPathwaysConnector
+from connectors.interpro import InterProConnector
+from connectors.intact import IntActConnector
+from connectors.ensembl import EnsemblConnector
+from connectors.disease_ontology import DiseaseOntologyConnector
+from connectors.chebi import ChEBIConnector
+from connectors.crossref import CrossRefConnector
+from connectors.openalex import OpenAlexConnector
+from connectors.clinvar import ClinVarConnector
+from connectors.gnomad import GnomadConnector
+from connectors.hpo import HPOConnector
+from connectors.pharos import PharosConnector
 from core.provenance import ProvenanceBundle
 from core.cache import cache_key as _cache_key, two_tier_get, two_tier_put
 from models.entities import CategoryResult, SearchResultEnvelope
@@ -37,18 +52,18 @@ log = structlog.get_logger()
 
 # Map intent → connector classes
 INTENT_CONNECTORS: Dict[str, List[Type[BaseConnector]]] = {
-    "protein": [UniProtConnector, OpenTargetsConnector, STRINGConnector, ChEMBLConnector, PubMedConnector, ClinicalTrialsConnector],
-    "gene": [OpenTargetsConnector, ChEMBLConnector, PubMedConnector, ClinicalTrialsConnector],
-    "molecule": [ChEMBLConnector, PubChemConnector],
-    "drug": [ChEMBLConnector, OpenTargetsConnector, PubMedConnector, ClinicalTrialsConnector],
-    "disease": [OpenTargetsConnector, ChEMBLConnector, PubMedConnector, ClinicalTrialsConnector],
-    "pathway": [ReactomeConnector],
-    "structure": [RCSBConnector, AlphaFoldConnector],
-    "clinical_trial": [ClinicalTrialsConnector],
-    "publication": [PubMedConnector, EuropePMCConnector],
-    "patent": [PatentsViewConnector],
-    "variant": [GWASCatalogConnector, IndiGenLoader, IGVDBLoader, GenomeAsiaLoader],
-    "general": [UniProtConnector, OpenTargetsConnector, PubMedConnector, ChEMBLConnector, ClinicalTrialsConnector],
+    "protein": [UniProtConnector, OpenTargetsConnector, STRINGConnector, ChEMBLConnector, PubMedConnector, ClinicalTrialsConnector, InterProConnector, PharosConnector, AlphaFoldConnector, EuropePMCConnector],
+    "gene": [OpenTargetsConnector, ChEMBLConnector, PubMedConnector, ClinicalTrialsConnector, EnsemblConnector, PharosConnector, STRINGConnector, EuropePMCConnector],
+    "molecule": [ChEMBLConnector, PubChemConnector, ChEBIConnector],
+    "drug": [ChEMBLConnector, OpenTargetsConnector, PubMedConnector, ClinicalTrialsConnector, PubChemConnector, PharosConnector, EuropePMCConnector],
+    "disease": [OpenTargetsConnector, ChEMBLConnector, PubMedConnector, ClinicalTrialsConnector, DiseaseOntologyConnector, HPOConnector, PharosConnector, EuropePMCConnector],
+    "pathway": [ReactomeConnector, KEGGConnector, WikiPathwaysConnector],
+    "structure": [RCSBConnector, AlphaFoldConnector, InterProConnector],
+    "clinical_trial": [ClinicalTrialsConnector, EuropePMCConnector],
+    "publication": [PubMedConnector, EuropePMCConnector, OpenAlexConnector, CrossRefConnector],
+    "patent": [PatentsViewConnector, EuropePMCConnector],
+    "variant": [GWASCatalogConnector, ClinVarConnector, GnomadConnector, EnsemblConnector, IndiGenLoader, IGVDBLoader, GenomeAsiaLoader],
+    "general": [UniProtConnector, OpenTargetsConnector, PubMedConnector, ChEMBLConnector, ClinicalTrialsConnector, ReactomeConnector, STRINGConnector, PubChemConnector, EuropePMCConnector, PharosConnector],
 }
 
 # Per-type table columns
@@ -67,6 +82,102 @@ COLUMN_DEFS: Dict[str, List[str]] = {
     "variant": ["id", "name", "gene", "consequence", "clinical_significance", "gwas_significance", "indian_demographic_context", "url"],
 }
 
+# ---------------------------------------------------------------------------
+# BM25 helpers
+# ---------------------------------------------------------------------------
+
+_TOKEN_RE = re.compile(r"\w+")
+
+
+def _tokenize(text: str) -> List[str]:
+    return _TOKEN_RE.findall(text.lower())
+
+
+def _entity_text(entity: Dict[str, Any]) -> str:
+    """Produce a searchable text blob from common entity fields."""
+    parts = [
+        entity.get("name", ""),
+        entity.get("canonical_name", ""),
+        entity.get("title", ""),
+        entity.get("abstract", ""),
+        entity.get("description", ""),
+        entity.get("gene_symbol", ""),
+        entity.get("mechanism_of_action", ""),
+    ]
+    return " ".join(str(p) for p in parts if p)
+
+
+class _BM25Index:
+    """Minimal BM25 implementation (k1=1.5, b=0.75) — no external deps."""
+
+    def __init__(self, k1: float = 1.5, b: float = 0.75) -> None:
+        self.k1 = k1
+        self.b = b
+        self._corpus: List[List[str]] = []
+        self._ids: List[str] = []
+        self._tf: List[Dict[str, int]] = []
+        self._idf: Dict[str, float] = {}
+        self._avg_dl: float = 0.0
+
+    def build(self, entities: List[Dict[str, Any]]) -> None:
+        self._corpus = [_tokenize(_entity_text(e)) for e in entities]
+        self._ids = [e.get("id", str(i)) for i, e in enumerate(entities)]
+        n = len(self._corpus)
+        if n == 0:
+            return
+        self._avg_dl = sum(len(d) for d in self._corpus) / n
+        self._tf = [defaultdict(int) for _ in self._corpus]  # type: ignore[assignment]
+        df: Dict[str, int] = defaultdict(int)
+        for i, doc in enumerate(self._corpus):
+            for tok in doc:
+                self._tf[i][tok] += 1  # type: ignore[index]
+            for tok in set(doc):
+                df[tok] += 1
+        self._idf = {
+            tok: math.log((n - cnt + 0.5) / (cnt + 0.5) + 1.0)
+            for tok, cnt in df.items()
+        }
+
+    def scores(self, query: str) -> Dict[str, float]:
+        """Return {entity_id: bm25_score} for all indexed docs."""
+        qtokens = _tokenize(query)
+        result: Dict[str, float] = {}
+        for i, doc_tf in enumerate(self._tf):
+            dl = len(self._corpus[i])
+            score = 0.0
+            for tok in qtokens:
+                if tok not in self._idf:
+                    continue
+                tf_val = doc_tf.get(tok, 0)  # type: ignore[union-attr]
+                norm = tf_val * (self.k1 + 1) / (
+                    tf_val + self.k1 * (1 - self.b + self.b * dl / max(self._avg_dl, 1))
+                )
+                score += self._idf[tok] * norm
+            result[self._ids[i]] = score
+        return result
+
+
+def _reciprocal_rank_fusion(
+    ranked_lists: List[List[str]],
+    k: int = 60,
+) -> List[str]:
+    """Combine multiple ranked lists into one using RRF.
+
+    ``score = Σ 1 / (k + rank_i)`` for each list where the item appears.
+    Returns IDs sorted by descending RRF score.
+    """
+    scores: Dict[str, float] = defaultdict(float)
+    for ranked in ranked_lists:
+        for rank, item_id in enumerate(ranked, start=1):
+            scores[item_id] += 1.0 / (k + rank)
+    return sorted(scores, key=lambda x: scores[x], reverse=True)
+
+
+# ---------------------------------------------------------------------------
+# Main search entry point
+# ---------------------------------------------------------------------------
+
+
 
 async def execute_search(
     query: str,
@@ -74,21 +185,42 @@ async def execute_search(
     filters: Optional[Dict[str, Any]] = None,
     limit: int = 20,
     strict_evidence: bool = False,
+    search_mode: Literal["semantic", "lexical", "hybrid"] = "hybrid",
 ) -> SearchResultEnvelope:
-    """Run full multi-source search pipeline and return SearchResultEnvelope."""
+    """Run full multi-source search pipeline and return SearchResultEnvelope.
+
+    Args:
+        query:        Free-text search query.
+        mode:         Intent-detection mode (``"auto"`` or specific intent).
+        filters:      Optional filter dict (sources, year_from, …).
+        limit:        Max results per connector.
+        strict_evidence: Require high-confidence evidence only.
+        search_mode:  Ranking strategy:
+                      ``"semantic"``  — connector scores only (default prior behaviour);
+                      ``"lexical"``   — BM25 scores only;
+                      ``"hybrid"``    — RRF fusion of semantic + BM25 ranks (default).
+    """
     t0 = time.monotonic()
 
     # Cache lookup — envelope-level caching (15 min TTL)
     filter_hash = hashlib.md5(json.dumps(filters or {}, sort_keys=True).encode()).hexdigest()[:8]
-    ck = _cache_key("search", query, "%s:%s:%d:%s" % (mode, filter_hash, limit, strict_evidence))
+    ck = _cache_key("search", query, "%s:%s:%d:%s:%s" % (mode, filter_hash, limit, strict_evidence, search_mode))
     cached = two_tier_get(ck)
     if cached is not None:
         log.info("cache_hit", query=query)
-        return SearchResultEnvelope(**cached)
+        envelope = SearchResultEnvelope(**cached)
+        provenance = dict(envelope.provenance or {})
+        cache_summary = dict(provenance.get("cache_summary") or {})
+        cache_summary["response_cache_hit"] = True
+        provenance["cache_summary"] = cache_summary
+        envelope.provenance = provenance
+        return envelope
 
     timings: Dict[str, float] = {}
     errors: List[str] = []
     provenance = ProvenanceBundle()
+    connector_timings_ms: Dict[str, float] = {}
+    connector_cache_hits: Dict[str, bool] = {}
 
     # 1. Intent detection
     intent, search_term, method = detect_intent(query)
@@ -120,13 +252,34 @@ async def execute_search(
     # 3. Instantiate connectors
     connectors: List[BaseConnector] = [cls() for cls in connector_classes]
 
-    # 4. Parallel search + enrichment
+    # 4. Parallel search + enrichment (with 15s per-connector timeout)
     t_fetch = time.monotonic()
-    search_tasks = [c.search(search_term, limit=limit) for c in connectors]
+
+    async def _guarded_search(c: BaseConnector, term: str, lim: int) -> Any:
+        """Run a connector search with a per-connector timeout so a single
+        slow/hung external API cannot hold up the entire search response."""
+        started = time.monotonic()
+        try:
+            return await asyncio.wait_for(c.search(term, limit=lim), timeout=30.0)
+        except asyncio.TimeoutError:
+            log.warning("connector_timeout", connector=c.name, timeout_s=30)
+            return []  # degrade gracefully — return empty rather than block
+        finally:
+            connector_timings_ms[c.name] = round((time.monotonic() - started) * 1000, 1)
+
+    async def _guarded_count(c: BaseConnector, term: str) -> Any:
+        try:
+            return await asyncio.wait_for(c.count(term), timeout=10.0)
+        except asyncio.TimeoutError:
+            log.warning("counter_timeout", connector=c.name)
+            return None
+
+    search_tasks = [_guarded_search(c, search_term, limit) for c in connectors]
 
     pubmed_counter = PubMedConnector()
     trials_counter = ClinicalTrialsConnector()
-    count_tasks = [pubmed_counter.count(search_term), trials_counter.count(search_term)]
+    count_tasks = [_guarded_count(pubmed_counter, search_term),
+                   _guarded_count(trials_counter, search_term)]
 
     all_results = await asyncio.gather(*search_tasks, *count_tasks, return_exceptions=True)
     timings["data_fetching"] = time.monotonic() - t_fetch
@@ -139,19 +292,40 @@ async def execute_search(
     seen_ids: Set[str] = set()
 
     for i, result in enumerate(search_results):
+        connector_name = connectors[i].name
+        timings[f"connector.{connector_name}.ms"] = connector_timings_ms.get(connector_name, 0.0)
         if isinstance(result, Exception):
-            errors.append("%s: %s" % (connectors[i].name, str(result)))
+            connector_cache_hits[connector_name] = False
+            errors.append("%s: %s" % (connector_name, str(result)))
             continue
         if not isinstance(result, list):
+            connector_cache_hits[connector_name] = False
             continue
-        provenance.sources_hit.append(connectors[i].name)
-        provenance.timestamps[connectors[i].name] = time.time()
+        connector_cache_hits[connector_name] = any(
+            isinstance(entity, dict) and bool(
+                entity.get("from_cache")
+                or entity.get("_from_cache")
+                or entity.get("cache_hit")
+            )
+            for entity in result
+        )
+        provenance.sources_hit.append(connector_name)
+        provenance.timestamps[connector_name] = time.time()
         for entity in result:
             eid = entity.get("id", "")
             if eid and eid not in seen_ids:
                 seen_ids.add(eid)
                 etype = entity.get("entity_type", "unknown")
                 all_entities[etype].append(entity)
+            elif eid and eid in seen_ids:
+                # Merge missing fields from duplicate (e.g. abstract from EuropePMC)
+                etype = entity.get("entity_type", "unknown")
+                for existing in all_entities.get(etype, []):
+                    if existing.get("id") == eid:
+                        for k, v in entity.items():
+                            if v and not existing.get(k):
+                                existing[k] = v
+                        break
 
     # 5.1 Enrich publications with PICO extraction
     publications = all_entities.get("publication", [])
@@ -186,6 +360,41 @@ async def execute_search(
             confidence_count += 1
 
     contradictions = await detect_contradictions(all_entities, search_term)
+
+    # 5.3 Hybrid re-ranking (BM25 + semantic → RRF)
+    if search_mode in ("lexical", "hybrid"):
+        t_bm25 = time.monotonic()
+        flat_entities: List[Dict[str, Any]] = [e for ents in all_entities.values() for e in ents]
+        bm25_idx = _BM25Index()
+        bm25_idx.build(flat_entities)
+        bm25_scores = bm25_idx.scores(query)
+
+        if search_mode == "hybrid":
+            # Semantic rank: order of arrival (already deduped, first=most relevant)
+            semantic_rank = [e.get("id", "") for e in flat_entities if e.get("id")]
+            # BM25 rank: sorted by score descending
+            bm25_rank = sorted(bm25_scores, key=lambda x: bm25_scores[x], reverse=True)
+            rrf_order = _reciprocal_rank_fusion([semantic_rank, bm25_rank])
+        else:
+            # lexical only
+            rrf_order = sorted(bm25_scores, key=lambda x: bm25_scores[x], reverse=True)
+
+        # Rebuild all_entities dict preserving RRF order per type
+        id_to_entity: Dict[str, Dict[str, Any]] = {e.get("id", ""): e for ents in all_entities.values() for e in ents}
+        reordered: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        seen_reorder: Set[str] = set()
+        for eid in rrf_order:
+            e = id_to_entity.get(eid)
+            if e and eid not in seen_reorder:
+                seen_reorder.add(eid)
+                reordered[e.get("entity_type", "unknown")].append(e)
+        # Add any entities that had no id (shouldn't happen, but guard)
+        for etype, ents in all_entities.items():
+            for e in ents:
+                if e.get("id", "") not in seen_reorder:
+                    reordered[etype].append(e)
+        all_entities = reordered  # type: ignore[assignment]
+        timings["bm25_rerank"] = time.monotonic() - t_bm25
 
     # 6. Enrichment counts
     pubmed_count = count_results[0] if not isinstance(count_results[0], Exception) else None
@@ -241,6 +450,11 @@ async def execute_search(
         provenance={
             "sources_hit": provenance.sources_hit,
             "timestamps": provenance.timestamps,
+            "cache_summary": {
+                "response_cache_hit": False,
+                "connector_cache_hits": connector_cache_hits,
+                "uncached_query": True,
+            },
         },
         timings=timings,
         errors=errors,

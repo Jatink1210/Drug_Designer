@@ -5,7 +5,8 @@ import re
 from typing import List, Dict, Set
 from bs4 import BeautifulSoup
 
-DIGINET_API_KEY = "84e60a3a-59c5-4808-816a-92d92063541e"
+from config import settings
+DIGINET_API_KEY = settings.disgenet_api_key
 
 # Junk patterns to filter out non-gene entries
 JUNK_PATTERNS = {
@@ -13,6 +14,24 @@ JUNK_PATTERNS = {
                    'DOCTYPE', 'ORG', 'WARNING', 'WILL', 'AND', 'SITE', 'CRAWLER', 
                    'CRAWL', 'BLOCK', 'API', 'XML', 'MIM', 'RANGES', 'OMIM', 'SUB', 
                    'CRAWLS', 'IMPLICATED'},
+    # Database/ontology identifiers that are NOT gene symbols
+    'db_identifiers': {'MONDO', 'NCBI', 'QTL', 'GTR', 'ICD', 'ORPHA', 'UCSC',
+                       'MPLPF', 'ACTIN', 'MESH', 'DOID', 'SNOMED', 'KEGG', 'HPO',
+                       'UMLS', 'NCI', 'EFO', 'GARD', 'NORD', 'OMIA', 'GWAS',
+                       'PHENO', 'GENE', 'DISEASE', 'HTML', 'HTTP', 'HTTPS',
+                       'TYPES', 'LOCUS', 'HAPMAP', 'ENCODE', 'HUGO', 'HGNC',
+                       'RNA', 'DNA', 'EVS', 'NHLBI', 'EBI', 'EMBL', 'SIFT',
+                       'CADD', 'REVEL', 'DANN', 'GERP', 'MAPQ', 'QUAL', 'INFO',
+                       'FILTER', 'FORMAT', 'SAMPLE', 'CHROM', 'ALLELE',
+                       'BIOGRID', 'INTACT', 'STRING', 'REACTOME', 'PUBMED',
+                       'UNIPROT', 'ENSEMBL', 'REFSEQ', 'GENBANK', 'COSMIC',
+                       'T1D', 'T1D1', 'T2D', 'T2D1', 'T2DM', 'T1DM', 'NIDDM', 'IDDM',
+                       'E10', 'E11', 'E12', 'E13', 'E14',
+                       'MGI', 'TYPE', 'CCR', 'TM4', 'MODY', 'LADA',
+                       'NSCLC', 'SCLC', 'CML', 'AML', 'ALL', 'CLL',
+                       'IBD', 'SLE', 'COPD', 'CHF', 'CAD', 'CVD',
+                       'ADHD', 'PTSD', 'OCD', 'GAD', 'MDD', 'BPD',
+                       'HCV', 'HBV', 'HIV', 'HPV', 'HSV', 'RSV', 'CMV'},
     'numeric_only': r'^\d+$',  # Pure numbers
     'short_noise': r'^[A-Z]{1,2}$',  # Single/double letters like 'A', 'OR'
     'html_tags': r'^[<>].*|.*[<>]$',  # HTML tag remnants
@@ -32,6 +51,10 @@ def filter_gene_symbols(genes: List[str]) -> List[str]:
             
         # Skip HTML/XML artifacts
         if gene in JUNK_PATTERNS['html_words']:
+            continue
+
+        # Skip database/ontology identifiers masquerading as genes
+        if gene in JUNK_PATTERNS['db_identifiers']:
             continue
             
         # Skip pure numbers
@@ -58,30 +81,32 @@ def filter_gene_symbols(genes: List[str]) -> List[str]:
 
 def search_all_databases(disease_info: Dict) -> List[Dict]:
     """Search all available databases for disease-gene associations"""
+    import structlog
+    _log = structlog.get_logger("disease.searchers")
     results = []
     
-    print("  📊 Searching GeneCards...")
+    _log.info("searching_database", db="GeneCards")
     results.append(search_genecards(disease_info))
     
-    print("  🧬 Searching Diginet...")
+    _log.info("searching_database", db="Diginet")
     results.append(search_diginet(disease_info))
     
-    print("  🎯 Searching OpenTargets...")
+    _log.info("searching_database", db="OpenTargets")
     results.append(search_opentargets(disease_info))
     
-    print("  🧪 Searching OMIM (filtered)...")
+    _log.info("searching_database", db="OMIM")
     results.append(search_omim_filtered(disease_info))
     
-    print("  🔬 Searching CTD...")
+    _log.info("searching_database", db="CTD")
     results.append(search_ctd(disease_info))
     
-    print("  📈 Searching KEGG (converted)...")
+    _log.info("searching_database", db="KEGG")
     results.append(search_kegg_converted(disease_info))
     
-    print("  🧬 Searching STRING-DB...")
+    _log.info("searching_database", db="STRING-DB")
     results.append(search_string_db(disease_info))
     
-    print("  🏥 Searching ClinVar...")
+    _log.info("searching_database", db="ClinVar")
     results.append(search_clinvar(disease_info))
     
     return [r for r in results if r.get('genes')]
@@ -180,10 +205,19 @@ def search_opentargets(disease_info: Dict) -> Dict:
         
         response = requests.post(search_url, json=disease_query, timeout=20)
         genes = set()
+        gene_details = {}  # symbol -> {name, target_id, score}
         
         if response.status_code == 200:
             data = response.json()
             disease_hits = data.get('data', {}).get('search', {}).get('hits', [])
+            
+            # Fallback: try original name if preferred_name returns no hits
+            if not disease_hits and disease_info.get('original_name', '') != disease_info['preferred_name']:
+                fallback_query = dict(disease_query)
+                fallback_query['variables'] = {'queryString': disease_info['original_name']}
+                fb_resp = requests.post(search_url, json=fallback_query, timeout=20)
+                if fb_resp.status_code == 200:
+                    disease_hits = fb_resp.json().get('data', {}).get('search', {}).get('hits', [])
             
             if disease_hits:
                 disease_id = disease_hits[0]['id']
@@ -221,12 +255,18 @@ def search_opentargets(disease_info: Dict) -> Dict:
                         gene_symbol = target.get('target', {}).get('approvedSymbol', '').strip()
                         if gene_symbol:
                             genes.add(gene_symbol)
+                            gene_details[gene_symbol] = {
+                                'name': target.get('target', {}).get('approvedName', ''),
+                                'target_id': target.get('target', {}).get('id', ''),
+                                'score': target.get('score', 0.0),
+                            }
         
         filtered_genes = filter_gene_symbols(list(genes))
         
         return {
             'database': 'OpenTargets',
             'genes': filtered_genes,
+            'gene_details': {g: gene_details[g] for g in filtered_genes if g in gene_details},
             'status': 'success' if filtered_genes else 'no_results'
         }
     except Exception as e:

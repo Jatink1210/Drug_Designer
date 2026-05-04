@@ -6,18 +6,21 @@ Satisfies Section 22 DoD item #8.
 """
 import httpx
 import structlog
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+from services.runtime.base import BaseRuntime
 
 log = structlog.get_logger(__name__)
 
-class LlamaCppRuntime:
+class LlamaCppRuntime(BaseRuntime):
     """
     Direct connector to a llama.cpp HTTP server.
     Supports the llama.cpp server API format (/completion endpoint).
+    Conforms to BaseRuntime ABC (§44.1).
     """
-    def __init__(self, endpoint: str = "http://localhost:8080"):
+    def __init__(self, endpoint: str = "http://localhost:8080", model: str = ""):
         self.endpoint = endpoint
-        log.info("llama_cpp_connector_initialized", endpoint=endpoint)
+        self.model = model
+        log.info("llama_cpp_connector_initialized", endpoint=endpoint, model=model)
 
     async def health_check(self) -> Dict[str, Any]:
         try:
@@ -91,3 +94,17 @@ class LlamaCppRuntime:
         except Exception as e:
             return {"error": str(e)}
         return {}
+
+    # ── BaseRuntime ABC conformance ──────────────────────
+
+    async def chat(self, messages: List[Dict[str, str]], **kwargs) -> str:
+        prompt = "\n".join(f"{m['role']}: {m['content']}" for m in messages)
+        result = await self.generate(prompt + "\nassistant:", **kwargs)
+        return result.get("text", "")
+
+    async def embeddings(self, texts: List[str], **kwargs) -> List[List[float]]:
+        raise NotImplementedError("llama.cpp server does not support embeddings natively")
+
+    @property
+    def capabilities(self) -> List[str]:
+        return ["chat"]

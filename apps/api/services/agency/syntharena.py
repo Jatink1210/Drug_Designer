@@ -10,10 +10,12 @@ import time
 from typing import Dict, Any
 import structlog
 
+from services.runtime.policy import ollama_enabled
+
 log = structlog.get_logger(__name__)
 
 class SynthArenaScorer:
-    def __init__(self, endpoint: str = "http://localhost:11434/api/generate"):
+    def __init__(self, endpoint: str = "http://localhost:11434/api/chat"):
         self.endpoint = endpoint
         log.info("syntharena_scorer_online", target_bus=endpoint)
         
@@ -21,11 +23,13 @@ class SynthArenaScorer:
         """Dispatches an absolute physical token prompt to the isolated hardware port."""
         start = time.monotonic()
         try:
+            if not ollama_enabled():
+                return {"model": model, "text": "[LLM_DISABLED_BY_POLICY]", "speed_tps": 0.0}
             async with httpx.AsyncClient(timeout=35.0) as client:
-                res = await client.post(self.endpoint, json={"model": model, "prompt": prompt, "stream": False})
+                res = await client.post(self.endpoint, json={"model": model, "messages": [{"role": "user", "content": prompt}], "stream": False})
                 res.raise_for_status()
                 
-                text = res.json().get("response", "")
+                text = res.json().get("message", {}).get("content", "")
                 tok_count = len(text.split())
                 dur = time.monotonic() - start
                 
